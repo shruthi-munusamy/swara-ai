@@ -23,6 +23,12 @@ models/*.ckpt
 wandb/
 *.log
 .ipynb_checkpoints/
+# TensorFlow / Keras runtime artifacts
+*.pb
+saved_model.pb
+checkpoints/
+tf_logs/
+.keras/
 
 # Audio (large)
 *.wav
