@@ -1,0 +1,548 @@
+# Carnatic Melakarta Ragas
+#
+# All 72 parent ragas of the Melakarta system. Each is sampurna (uses all
+# seven swaras in both ascending and descending order).
+#
+# Schema:
+#   number: 1-72
+#   name: common name (primary)
+#   melakarta_name: formal Sanskrit name (only when it differs from name)
+#   arohanam: ascending sequence, inclusive of upper Sa (S')
+#   avarohanam: descending sequence
+#   swaras: unique swara set used in the raga
+#   allied_ragas: list of ragas commonly confused with this one (empty for now)
+#   notes: optional context
+#
+# Swara notation:
+#   S R1 R2 R3 G1 G2 G3 M1 M2 P D1 D2 D3 N1 N2 N3
+#   Upper-octave Sa is written S'.
+#
+# Cents values for each swarasthana are defined in src/swara/definitions.py
+# (12-TET baseline; ±35c tolerance configured in config.yaml).
+#
+# Transliteration policy:
+#   ASCII-normalized Carnatic raga names without diacritics.
+#   Common concert/practical spellings preferred over strict Sanskrit
+#   transliteration (e.g. Gavambodhi rather than Ghavāmbhodi).
+
+ragams:
+
+  - number: 1
+    name: Kanakangi
+    arohanam:   [S, R1, G1, M1, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M1, G1, R1, S]
+    swaras: [S, R1, G1, M1, P, D1, N1]
+    allied_ragas: []
+
+  - number: 2
+    name: Ratnangi
+    arohanam:   [S, R1, G1, M1, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M1, G1, R1, S]
+    swaras: [S, R1, G1, M1, P, D1, N2]
+    allied_ragas: []
+
+  - number: 3
+    name: Ganamurti
+    arohanam:   [S, R1, G1, M1, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M1, G1, R1, S]
+    swaras: [S, R1, G1, M1, P, D1, N3]
+    allied_ragas: []
+
+  - number: 4
+    name: Vanaspati
+    arohanam:   [S, R1, G1, M1, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M1, G1, R1, S]
+    swaras: [S, R1, G1, M1, P, D2, N2]
+    allied_ragas: []
+
+  - number: 5
+    name: Manavati
+    arohanam:   [S, R1, G1, M1, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M1, G1, R1, S]
+    swaras: [S, R1, G1, M1, P, D2, N3]
+    allied_ragas: []
+
+  - number: 6
+    name: Tanarupi
+    arohanam:   [S, R1, G1, M1, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M1, G1, R1, S]
+    swaras: [S, R1, G1, M1, P, D3, N3]
+    allied_ragas: []
+
+  - number: 7
+    name: Senavati
+    arohanam:   [S, R1, G2, M1, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M1, G2, R1, S]
+    swaras: [S, R1, G2, M1, P, D1, N1]
+    allied_ragas: []
+
+  - number: 8
+    name: Todi
+    melakarta_name: Hanumatodi
+    arohanam:   [S, R1, G2, M1, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M1, G2, R1, S]
+    swaras: [S, R1, G2, M1, P, D1, N2]
+    allied_ragas: []
+    notes: Among the most popular and emotionally expressive ragas
+
+  - number: 9
+    name: Dhenuka
+    arohanam:   [S, R1, G2, M1, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M1, G2, R1, S]
+    swaras: [S, R1, G2, M1, P, D1, N3]
+    allied_ragas: []
+
+  - number: 10
+    name: Natakapriya
+    arohanam:   [S, R1, G2, M1, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M1, G2, R1, S]
+    swaras: [S, R1, G2, M1, P, D2, N2]
+    allied_ragas: []
+
+  - number: 11
+    name: Kokilapriya
+    arohanam:   [S, R1, G2, M1, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M1, G2, R1, S]
+    swaras: [S, R1, G2, M1, P, D2, N3]
+    allied_ragas: []
+
+  - number: 12
+    name: Rupavati
+    arohanam:   [S, R1, G2, M1, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M1, G2, R1, S]
+    swaras: [S, R1, G2, M1, P, D3, N3]
+    allied_ragas: []
+
+  - number: 13
+    name: Gayakapriya
+    arohanam:   [S, R1, G3, M1, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M1, G3, R1, S]
+    swaras: [S, R1, G3, M1, P, D1, N1]
+    allied_ragas: []
+
+  - number: 14
+    name: Vakulabharanam
+    arohanam:   [S, R1, G3, M1, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M1, G3, R1, S]
+    swaras: [S, R1, G3, M1, P, D1, N2]
+    allied_ragas: []
+
+  - number: 15
+    name: Mayamalavagowla
+    arohanam:   [S, R1, G3, M1, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M1, G3, R1, S]
+    swaras: [S, R1, G3, M1, P, D1, N3]
+    allied_ragas: []
+    notes: Traditionally the first raga taught to beginners
+
+  - number: 16
+    name: Chakravakam
+    arohanam:   [S, R1, G3, M1, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M1, G3, R1, S]
+    swaras: [S, R1, G3, M1, P, D2, N2]
+    allied_ragas: []
+
+  - number: 17
+    name: Suryakantam
+    arohanam:   [S, R1, G3, M1, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M1, G3, R1, S]
+    swaras: [S, R1, G3, M1, P, D2, N3]
+    allied_ragas: []
+
+  - number: 18
+    name: Hatakambari
+    arohanam:   [S, R1, G3, M1, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M1, G3, R1, S]
+    swaras: [S, R1, G3, M1, P, D3, N3]
+    allied_ragas: []
+
+  - number: 19
+    name: Jhankaradhvani
+    arohanam:   [S, R2, G2, M1, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M1, G2, R2, S]
+    swaras: [S, R2, G2, M1, P, D1, N1]
+    allied_ragas: []
+
+  - number: 20
+    name: Natabhairavi
+    arohanam:   [S, R2, G2, M1, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M1, G2, R2, S]
+    swaras: [S, R2, G2, M1, P, D1, N2]
+    allied_ragas: []
+    notes: Same swaras as the Western natural minor scale
+
+  - number: 21
+    name: Keeravani
+    arohanam:   [S, R2, G2, M1, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M1, G2, R2, S]
+    swaras: [S, R2, G2, M1, P, D1, N3]
+    allied_ragas: []
+    notes: Same swaras as the Western harmonic minor scale
+
+  - number: 22
+    name: Kharaharapriya
+    arohanam:   [S, R2, G2, M1, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M1, G2, R2, S]
+    swaras: [S, R2, G2, M1, P, D2, N2]
+    allied_ragas: []
+    notes: Same swaras as the Dorian mode; parent of many janyas including Abheri and Sriranjani
+
+  - number: 23
+    name: Gourimanohari
+    arohanam:   [S, R2, G2, M1, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M1, G2, R2, S]
+    swaras: [S, R2, G2, M1, P, D2, N3]
+    allied_ragas: []
+
+  - number: 24
+    name: Varunapriya
+    arohanam:   [S, R2, G2, M1, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M1, G2, R2, S]
+    swaras: [S, R2, G2, M1, P, D3, N3]
+    allied_ragas: []
+
+  - number: 25
+    name: Mararanjani
+    arohanam:   [S, R2, G3, M1, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M1, G3, R2, S]
+    swaras: [S, R2, G3, M1, P, D1, N1]
+    allied_ragas: []
+
+  - number: 26
+    name: Charukesi
+    arohanam:   [S, R2, G3, M1, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M1, G3, R2, S]
+    swaras: [S, R2, G3, M1, P, D1, N2]
+    allied_ragas: []
+
+  - number: 27
+    name: Sarasangi
+    arohanam:   [S, R2, G3, M1, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M1, G3, R2, S]
+    swaras: [S, R2, G3, M1, P, D1, N3]
+    allied_ragas: []
+
+  - number: 28
+    name: Harikambhoji
+    arohanam:   [S, R2, G3, M1, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M1, G3, R2, S]
+    swaras: [S, R2, G3, M1, P, D2, N2]
+    allied_ragas: []
+    notes: Same swaras as the Mixolydian mode; parent of Kambhoji and Yadukulakambhoji
+
+  - number: 29
+    name: Sankarabharanam
+    melakarta_name: Dhirashankarabharanam
+    arohanam:   [S, R2, G3, M1, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M1, G3, R2, S]
+    swaras: [S, R2, G3, M1, P, D2, N3]
+    allied_ragas: []
+    notes: Same swaras as the Western major scale (Ionian)
+
+  - number: 30
+    name: Naganandini
+    arohanam:   [S, R2, G3, M1, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M1, G3, R2, S]
+    swaras: [S, R2, G3, M1, P, D3, N3]
+    allied_ragas: []
+
+  - number: 31
+    name: Yagapriya
+    arohanam:   [S, R3, G3, M1, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M1, G3, R3, S]
+    swaras: [S, R3, G3, M1, P, D1, N1]
+    allied_ragas: []
+
+  - number: 32
+    name: Ragavardhini
+    arohanam:   [S, R3, G3, M1, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M1, G3, R3, S]
+    swaras: [S, R3, G3, M1, P, D1, N2]
+    allied_ragas: []
+
+  - number: 33
+    name: Gangeyabhushani
+    arohanam:   [S, R3, G3, M1, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M1, G3, R3, S]
+    swaras: [S, R3, G3, M1, P, D1, N3]
+    allied_ragas: []
+
+  - number: 34
+    name: Vagadhishwari
+    arohanam:   [S, R3, G3, M1, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M1, G3, R3, S]
+    swaras: [S, R3, G3, M1, P, D2, N2]
+    allied_ragas: []
+
+  - number: 35
+    name: Shulini
+    arohanam:   [S, R3, G3, M1, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M1, G3, R3, S]
+    swaras: [S, R3, G3, M1, P, D2, N3]
+    allied_ragas: []
+
+  - number: 36
+    name: Chalanattai
+    arohanam:   [S, R3, G3, M1, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M1, G3, R3, S]
+    swaras: [S, R3, G3, M1, P, D3, N3]
+    allied_ragas: []
+
+  - number: 37
+    name: Salagam
+    arohanam:   [S, R1, G1, M2, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M2, G1, R1, S]
+    swaras: [S, R1, G1, M2, P, D1, N1]
+    allied_ragas: []
+
+  - number: 38
+    name: Jalarnavam
+    arohanam:   [S, R1, G1, M2, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M2, G1, R1, S]
+    swaras: [S, R1, G1, M2, P, D1, N2]
+    allied_ragas: []
+
+  - number: 39
+    name: Jhalavarali
+    arohanam:   [S, R1, G1, M2, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M2, G1, R1, S]
+    swaras: [S, R1, G1, M2, P, D1, N3]
+    allied_ragas: []
+    notes: Parent of the popular janya Varali
+
+  - number: 40
+    name: Navaneetam
+    arohanam:   [S, R1, G1, M2, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M2, G1, R1, S]
+    swaras: [S, R1, G1, M2, P, D2, N2]
+    allied_ragas: []
+
+  - number: 41
+    name: Pavani
+    arohanam:   [S, R1, G1, M2, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M2, G1, R1, S]
+    swaras: [S, R1, G1, M2, P, D2, N3]
+    allied_ragas: []
+
+  - number: 42
+    name: Raghupriya
+    arohanam:   [S, R1, G1, M2, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M2, G1, R1, S]
+    swaras: [S, R1, G1, M2, P, D3, N3]
+    allied_ragas: []
+
+  - number: 43
+    name: Gavambodhi
+    arohanam:   [S, R1, G2, M2, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M2, G2, R1, S]
+    swaras: [S, R1, G2, M2, P, D1, N1]
+    allied_ragas: []
+
+  - number: 44
+    name: Bhavapriya
+    arohanam:   [S, R1, G2, M2, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M2, G2, R1, S]
+    swaras: [S, R1, G2, M2, P, D1, N2]
+    allied_ragas: []
+
+  - number: 45
+    name: Shubhapantuvarali
+    arohanam:   [S, R1, G2, M2, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M2, G2, R1, S]
+    swaras: [S, R1, G2, M2, P, D1, N3]
+    allied_ragas: []
+
+  - number: 46
+    name: Shadvidhamargini
+    arohanam:   [S, R1, G2, M2, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M2, G2, R1, S]
+    swaras: [S, R1, G2, M2, P, D2, N2]
+    allied_ragas: []
+
+  - number: 47
+    name: Suvarnangi
+    arohanam:   [S, R1, G2, M2, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M2, G2, R1, S]
+    swaras: [S, R1, G2, M2, P, D2, N3]
+    allied_ragas: []
+
+  - number: 48
+    name: Divyamani
+    arohanam:   [S, R1, G2, M2, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M2, G2, R1, S]
+    swaras: [S, R1, G2, M2, P, D3, N3]
+    allied_ragas: []
+
+  - number: 49
+    name: Dhavalambari
+    arohanam:   [S, R1, G3, M2, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M2, G3, R1, S]
+    swaras: [S, R1, G3, M2, P, D1, N1]
+    allied_ragas: []
+
+  - number: 50
+    name: Namanarayani
+    arohanam:   [S, R1, G3, M2, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M2, G3, R1, S]
+    swaras: [S, R1, G3, M2, P, D1, N2]
+    allied_ragas: []
+
+  - number: 51
+    name: Pantuvarali
+    melakarta_name: Kamavardhini
+    arohanam:   [S, R1, G3, M2, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M2, G3, R1, S]
+    swaras: [S, R1, G3, M2, P, D1, N3]
+    allied_ragas: []
+    notes: Widely performed; emotionally evocative
+
+  - number: 52
+    name: Ramapriya
+    arohanam:   [S, R1, G3, M2, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M2, G3, R1, S]
+    swaras: [S, R1, G3, M2, P, D2, N2]
+    allied_ragas: []
+
+  - number: 53
+    name: Gamanasrama
+    arohanam:   [S, R1, G3, M2, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M2, G3, R1, S]
+    swaras: [S, R1, G3, M2, P, D2, N3]
+    allied_ragas: []
+
+  - number: 54
+    name: Vishwambhari
+    arohanam:   [S, R1, G3, M2, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M2, G3, R1, S]
+    swaras: [S, R1, G3, M2, P, D3, N3]
+    allied_ragas: []
+
+  - number: 55
+    name: Shamalangi
+    arohanam:   [S, R2, G2, M2, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M2, G2, R2, S]
+    swaras: [S, R2, G2, M2, P, D1, N1]
+    allied_ragas: []
+
+  - number: 56
+    name: Shanmukhapriya
+    arohanam:   [S, R2, G2, M2, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M2, G2, R2, S]
+    swaras: [S, R2, G2, M2, P, D1, N2]
+    allied_ragas: []
+    notes: Widely performed in concerts
+
+  - number: 57
+    name: Simhendramadhyamam
+    arohanam:   [S, R2, G2, M2, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M2, G2, R2, S]
+    swaras: [S, R2, G2, M2, P, D1, N3]
+    allied_ragas: []
+    notes: Striking raga with distinctive M2 and N3
+
+  - number: 58
+    name: Hemavati
+    arohanam:   [S, R2, G2, M2, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M2, G2, R2, S]
+    swaras: [S, R2, G2, M2, P, D2, N2]
+    allied_ragas: []
+
+  - number: 59
+    name: Dharmavati
+    arohanam:   [S, R2, G2, M2, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M2, G2, R2, S]
+    swaras: [S, R2, G2, M2, P, D2, N3]
+    allied_ragas: []
+
+  - number: 60
+    name: Neetimati
+    arohanam:   [S, R2, G2, M2, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M2, G2, R2, S]
+    swaras: [S, R2, G2, M2, P, D3, N3]
+    allied_ragas: []
+
+  - number: 61
+    name: Kantamani
+    arohanam:   [S, R2, G3, M2, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M2, G3, R2, S]
+    swaras: [S, R2, G3, M2, P, D1, N1]
+    allied_ragas: []
+
+  - number: 62
+    name: Rishabhapriya
+    arohanam:   [S, R2, G3, M2, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M2, G3, R2, S]
+    swaras: [S, R2, G3, M2, P, D1, N2]
+    allied_ragas: []
+
+  - number: 63
+    name: Latangi
+    arohanam:   [S, R2, G3, M2, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M2, G3, R2, S]
+    swaras: [S, R2, G3, M2, P, D1, N3]
+    allied_ragas: []
+
+  - number: 64
+    name: Vachaspati
+    arohanam:   [S, R2, G3, M2, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M2, G3, R2, S]
+    swaras: [S, R2, G3, M2, P, D2, N2]
+    allied_ragas: []
+
+  - number: 65
+    name: Kalyani
+    melakarta_name: Mechakalyani
+    arohanam:   [S, R2, G3, M2, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M2, G3, R2, S]
+    swaras: [S, R2, G3, M2, P, D2, N3]
+    allied_ragas: []
+    notes: Same swaras as the Western Lydian mode
+
+  - number: 66
+    name: Chitrambari
+    arohanam:   [S, R2, G3, M2, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M2, G3, R2, S]
+    swaras: [S, R2, G3, M2, P, D3, N3]
+    allied_ragas: []
+
+  - number: 67
+    name: Sucharitra
+    arohanam:   [S, R3, G3, M2, P, D1, N1, S']
+    avarohanam: [S', N1, D1, P, M2, G3, R3, S]
+    swaras: [S, R3, G3, M2, P, D1, N1]
+    allied_ragas: []
+
+  - number: 68
+    name: Jyotiswarupini
+    arohanam:   [S, R3, G3, M2, P, D1, N2, S']
+    avarohanam: [S', N2, D1, P, M2, G3, R3, S]
+    swaras: [S, R3, G3, M2, P, D1, N2]
+    allied_ragas: []
+
+  - number: 69
+    name: Dhatuvardhini
+    arohanam:   [S, R3, G3, M2, P, D1, N3, S']
+    avarohanam: [S', N3, D1, P, M2, G3, R3, S]
+    swaras: [S, R3, G3, M2, P, D1, N3]
+    allied_ragas: []
+
+  - number: 70
+    name: Nasikabhushani
+    arohanam:   [S, R3, G3, M2, P, D2, N2, S']
+    avarohanam: [S', N2, D2, P, M2, G3, R3, S]
+    swaras: [S, R3, G3, M2, P, D2, N2]
+    allied_ragas: []
+
+  - number: 71
+    name: Kosalam
+    arohanam:   [S, R3, G3, M2, P, D2, N3, S']
+    avarohanam: [S', N3, D2, P, M2, G3, R3, S]
+    swaras: [S, R3, G3, M2, P, D2, N3]
+    allied_ragas: []
+
+  - number: 72
+    name: Rasikapriya
+    arohanam:   [S, R3, G3, M2, P, D3, N3, S']
+    avarohanam: [S', N3, D3, P, M2, G3, R3, S]
+    swaras: [S, R3, G3, M2, P, D3, N3]
+    allied_ragas: []
