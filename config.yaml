@@ -1,0 +1,49 @@
+project:
+  name: swara-ai
+  version: 0.1.0
+
+audio:
+  sample_rate: 16000        # CREPE's expected SR
+  channels: 1
+  supported_formats: [wav, mp3, flac]
+
+pitch:
+  extractor: crepe
+  crepe_model: tiny         # tiny / small / medium / large / full
+  step_size_ms: 10
+  confidence_threshold: 0.5
+  fallback_extractor: pyin
+
+shruthi:
+  # User provides Hz directly or a note name we convert.
+  # Carnatic conventions: male ~130-180 Hz, female ~200-280 Hz.
+  default_hz: 220.0
+
+swara:
+  tolerance_cents: 35       # ±35c ~ ±1/4 semitone; covers gamaka + natural variation
+  min_stable_ms: 80         # minimum duration for a stable swara segment
+  smoothing_window: 5       # median filter window (frames)
+
+adherence:
+  out_of_raga_penalty: 1.0
+  in_raga_credit: 1.0
+  min_confidence: 0.5       # skip low-confidence frames in scoring
+
+identifier:
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.3
+  batch_size: 32
+  learning_rate: 1.0e-3
+  epochs: 50
+  num_ragas_mvp: 10         # start with 10; scale up as data allows
+
+wandb:
+  enabled: false
+  project: swara-ai
+  entity: null
+
+paths:
+  ragams_dir: ragams
+  models_dir: models
+  data_dir: data

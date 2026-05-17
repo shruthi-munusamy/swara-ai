@@ -1,0 +1,23 @@
+# Audio processing
+librosa>=0.10.1
+soundfile>=0.12.1
+crepe>=0.0.15           # pulls tensorflow as dependency
+
+# Numerical / scientific
+numpy>=1.24.0,<2.0
+scipy>=1.11.0
+
+# Config
+pyyaml>=6.0
+
+# ML (identifier head, phase 4)
+torch>=2.1.0
+
+# Utilities
+tqdm>=4.66.0
+
+# Experiment tracking (phase 4)
+wandb>=0.16.0
+
+# Testing
+pytest>=7.4.0

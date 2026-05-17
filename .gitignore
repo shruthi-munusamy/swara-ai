@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.pytest_cache/
+
+# Envs
+venv/
+.venv/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Project
+data/raw/
+data/processed/
+models/*.pt
+models/*.ckpt
+wandb/
+*.log
+.ipynb_checkpoints/
+
+# Audio (large)
+*.wav
+*.mp3
+*.flac
+!data/samples/*.wav
