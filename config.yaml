@@ -30,6 +30,7 @@ adherence:
   min_confidence: 0.5       # skip low-confidence frames in scoring
 
 identifier:
+  embedding_dim: 32        # small: vocab is only the 12 swara-position classes
   hidden_size: 128
   num_layers: 2
   dropout: 0.3
