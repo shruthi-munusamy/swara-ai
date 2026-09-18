@@ -13,6 +13,7 @@ pyyaml>=6.0
 
 # ML (identifier head, phase 4)
 torch>=2.1.0
+scikit-learn>=1.3.0    # macro-F1 metrics, and the SVM/MLP baselines (phase 4)
 
 # Utilities
 tqdm>=4.66.0

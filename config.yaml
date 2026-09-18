@@ -38,6 +38,7 @@ identifier:
   learning_rate: 1.0e-3
   epochs: 50
   num_ragas_mvp: 10         # start with 10; scale up as data allows
+  early_stopping_patience: 7   # epochs without val macro-F1 improvement before stopping
 
 wandb:
   enabled: false
