@@ -15,6 +15,9 @@ env/
 .idea/
 .DS_Store
 
+# Local-only
+.local/
+
 # Project
 data/raw/
 data/processed/

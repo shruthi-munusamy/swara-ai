@@ -16,6 +16,7 @@ torch>=2.1.0
 
 # Utilities
 tqdm>=4.66.0
+requests>=2.31.0
 
 # Experiment tracking (phase 4)
 wandb>=0.16.0
