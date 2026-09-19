@@ -3,8 +3,8 @@ Prepare the MVP raga set and train/val/test splits for the identifier.
 
 This is a one-time (re-runnable, deterministic) step between raw Saraga
 data and training: it decides *which* 10 ragas the MVP identifier will
-classify (a data-driven choice -- the 10 most-represented in the corpus,
-not a theory-driven pick) and writes reproducible splits.
+classify (a data-driven choice -- ranked by total audio duration, not a
+theory-driven pick; see --select-by) and writes reproducible splits.
 
 Usage:
     python scripts/prepare_identifier_data.py
@@ -25,12 +25,19 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.identifier.dataset import build_mvp_raga_list, discover_tracks, raga_counts, stratified_split
+from src.identifier.dataset import (
+    build_mvp_raga_list,
+    discover_tracks,
+    raga_counts,
+    raga_durations,
+    stratified_split,
+)
 
 DEFAULT_SARAGA_ROOT = Path("data/raw/saraga")
 DEFAULT_OUTPUT_DIR = Path("data/processed")
 DEFAULT_NUM_RAGAS = 10
 DEFAULT_SEED = 42
+DEFAULT_SELECT_BY = "duration"
 
 
 def main() -> int:
@@ -39,6 +46,12 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--num-ragas", type=int, default=DEFAULT_NUM_RAGAS)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument(
+        "--select-by",
+        choices=["duration", "count"],
+        default=DEFAULT_SELECT_BY,
+        help="Rank ragas by total audio duration (default) or track count.",
+    )
     args = parser.parse_args()
 
     if not args.saraga_root.exists():
@@ -50,13 +63,15 @@ def main() -> int:
     print(f"Found {len(tracks)} usable tracks.")
 
     counts = raga_counts(tracks)
-    print(f"\n{len(counts)} distinct ragas. Per-raga counts (top 30):")
-    for name, count in counts.most_common(30):
-        print(f"  {count:4d}  {name}")
+    durations = raga_durations(tracks)
+    print(f"\n{len(counts)} distinct ragas. Per-raga counts and duration (top 30 by {args.select_by}):")
+    ranked = (durations if args.select_by == "duration" else counts).most_common(30)
+    for name, _ in ranked:
+        print(f"  {counts[name]:4d} tracks   {durations[name] / 60:8.1f} min   {name}")
 
-    mvp_ragas = build_mvp_raga_list(tracks, top_k=args.num_ragas)
+    mvp_ragas = build_mvp_raga_list(tracks, top_k=args.num_ragas, by=args.select_by)
     mvp_set = set(mvp_ragas)
-    print(f"\nSelected top {args.num_ragas} ragas by track count: {mvp_ragas}")
+    print(f"\nSelected top {args.num_ragas} ragas by {args.select_by}: {mvp_ragas}")
 
     filtered = [t for t in tracks if t.raga in mvp_set]
     print(f"{len(filtered)} tracks remain after filtering to the MVP raga set.")
@@ -68,7 +83,9 @@ def main() -> int:
         yaml.safe_dump(
             {
                 "ragas": mvp_ragas,
+                "selected_by": args.select_by,
                 "counts": {name: counts[name] for name in mvp_ragas},
+                "duration_minutes": {name: round(durations[name] / 60, 1) for name in mvp_ragas},
                 "seed": args.seed,
             },
             f,

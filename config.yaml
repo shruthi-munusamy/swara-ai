@@ -39,6 +39,8 @@ identifier:
   epochs: 50
   num_ragas_mvp: 10         # start with 10; scale up as data allows
   early_stopping_patience: 7   # epochs without val macro-F1 improvement before stopping
+  window_size_segments: 48     # swara segments per training example (calibrated: ~63 segments/2.8min real track)
+  window_stride_segments: 24   # hop between window starts for tracks longer than window_size_segments
 
 wandb:
   enabled: false

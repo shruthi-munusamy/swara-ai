@@ -27,6 +27,19 @@ Variable-length sequences: tracks differ wildly in duration and swara count.
 Handled by padding + explicit lengths in `collate_fn`, consumed by
 `pack_padded_sequence` in the model (C12) -- not truncation, which would
 throw away signal from longer performances.
+
+Windowing (added after running against real data, not in the original plan):
+    Saraga has as few as 3-7 usable tracks for even the most-represented
+    ragas. One example per track leaves too little signal for an honest
+    train/val/test split -- a handful of tracks per class means a test set
+    of ~1 example per class, which produces an F1 number that means nothing.
+    `SaragaSwaraDataset` instead slides a fixed-size window over each
+    track's swara sequence, producing multiple training examples per track.
+    Splitting into train/val/test happens at the TRACK level, before
+    windowing (`stratified_split` operates on tracks) -- windows from the
+    same concert must never span two different splits, or the model could
+    trivially "recognize" a specific performance's pitch quirks instead of
+    learning the raga.
 """
 
 from __future__ import annotations
@@ -107,11 +120,15 @@ class TrackInfo:
         audio_path: path to the vocal mix audio file.
         tonic_hz: the track's annotated tonic (shruthi), from ctonic.txt.
         raga: raga name as it appears in Saraga metadata.
+        duration_seconds: audio duration, read once from the file header at
+            discovery time (not a full decode) so raga selection can rank by
+            total audio volume without re-reading every file on each call.
     """
     track_id: str
     audio_path: Path
     tonic_hz: float
     raga: str
+    duration_seconds: float
 
 
 def _read_tonic(ctonic_path: Path) -> float:
@@ -121,6 +138,16 @@ def _read_tonic(ctonic_path: Path) -> float:
         return float(text.split()[0])
     except (ValueError, IndexError) as e:
         raise DatasetError(f"Could not parse tonic from {ctonic_path}: {text!r}") from e
+
+
+def _read_duration_seconds(audio_path: Path) -> float:
+    """
+    Read audio duration from the file header/metadata, without decoding the
+    full waveform -- used only for ranking ragas by total audio volume.
+    """
+    import librosa
+
+    return float(librosa.get_duration(path=str(audio_path)))
 
 
 def _extract_raaga_name(metadata: dict) -> Optional[str]:
@@ -213,6 +240,14 @@ def discover_tracks(saraga_root: Path) -> List[TrackInfo]:
             skipped += 1
             continue
 
+        try:
+            duration_seconds = _read_duration_seconds(chosen_audio)
+        except Exception:
+            # Corrupt/unreadable audio header -- exclude rather than crash
+            # the whole scan over one bad file.
+            skipped += 1
+            continue
+
         track_id = str(track_dir.relative_to(saraga_root))
         tracks.append(
             TrackInfo(
@@ -220,6 +255,7 @@ def discover_tracks(saraga_root: Path) -> List[TrackInfo]:
                 audio_path=chosen_audio,
                 tonic_hz=tonic_hz,
                 raga=raga,
+                duration_seconds=duration_seconds,
             )
         )
 
@@ -232,6 +268,22 @@ def discover_tracks(saraga_root: Path) -> List[TrackInfo]:
 def raga_counts(tracks: Sequence[TrackInfo]) -> Counter:
     """Per-raga track counts, most-common first when iterated via .most_common()."""
     return Counter(t.raga for t in tracks)
+
+
+def raga_durations(tracks: Sequence[TrackInfo]) -> Counter:
+    """
+    Total audio duration (seconds) per raga.
+
+    Preferred over `raga_counts` for MVP raga selection: Saraga concerts
+    range from a few minutes to well over an hour, so a raga with many short
+    tracks can have far less actual training signal than one with fewer,
+    longer tracks. Duration is measured directly rather than approximated
+    from track count.
+    """
+    durations: Counter = Counter()
+    for t in tracks:
+        durations[t.raga] += t.duration_seconds
+    return durations
 
 
 def compute_swara_sequence(
@@ -299,13 +351,23 @@ def load_or_compute_sequence(
     return sequence
 
 
-def build_mvp_raga_list(tracks: Sequence[TrackInfo], top_k: int) -> List[str]:
+def build_mvp_raga_list(tracks: Sequence[TrackInfo], top_k: int, by: str = "duration") -> List[str]:
     """
-    Select the `top_k` most-represented ragas by track count. Data-driven,
-    not a theory-based pick -- see design log for why.
+    Select the `top_k` most-represented ragas. Data-driven, not a
+    theory-based pick -- see design log for why.
+
+    `by="duration"` (default) ranks by total audio duration -- see
+    `raga_durations` for why this beats track count as the selection metric
+    on this dataset. `by="count"` ranks by track count instead; kept for
+    comparison, not the default.
     """
-    counts = raga_counts(tracks)
-    return [name for name, _ in counts.most_common(top_k)]
+    if by == "duration":
+        weights = raga_durations(tracks)
+    elif by == "count":
+        weights = raga_counts(tracks)
+    else:
+        raise DatasetError(f"by must be 'duration' or 'count', got {by!r}")
+    return [name for name, _ in weights.most_common(top_k)]
 
 
 def stratified_split(
@@ -361,9 +423,46 @@ def stratified_split(
     return train, val, test
 
 
+def _window_bounds(seq_len: int, window_size: int, stride: int) -> List[Tuple[int, int]]:
+    """
+    Compute (start, end) index pairs for sliding windows over a sequence of
+    length `seq_len`.
+
+    Sequences no longer than `window_size` get a single window covering the
+    whole thing rather than being dropped -- with Saraga concerts this
+    short (some pieces are only a couple of minutes), discarding them would
+    waste already-scarce per-raga signal. Longer sequences get overlapping
+    windows at `stride`, with a final window anchored to the tail so the
+    last `window_size` segments are never excluded just because they don't
+    land on a stride boundary.
+    """
+    if seq_len == 0:
+        return []
+    if seq_len <= window_size:
+        return [(0, seq_len)]
+
+    bounds: List[Tuple[int, int]] = []
+    start = 0
+    while start + window_size <= seq_len:
+        bounds.append((start, start + window_size))
+        start += stride
+    if bounds[-1][1] < seq_len:
+        bounds.append((seq_len - window_size, seq_len))
+    return bounds
+
+
 class SaragaSwaraDataset(Dataset):
     """
-    PyTorch Dataset over Saraga tracks, yielding (swara_index_tensor, label).
+    PyTorch Dataset over windowed Saraga swara sequences, yielding
+    (swara_index_tensor, label).
+
+    Each track's cached/computed swara sequence is sliced into overlapping
+    fixed-length windows (see module docstring: "Windowing"), and each
+    window is a separate example. Track-level train/val/test separation
+    must happen *before* constructing this class (via `stratified_split`
+    on `tracks`) -- windowing here only ever splits a track's own sequence
+    into pieces, so no window can leak across the split boundary its parent
+    track was assigned to.
 
     Args:
         tracks: TrackInfo list for this split.
@@ -372,6 +471,9 @@ class SaragaSwaraDataset(Dataset):
             (this is why it's passed in rather than derived per-split).
         cache_dir: where computed swara sequences are cached as .npz.
         pipeline_kwargs: forwarded to `compute_swara_sequence` on cache miss.
+        window_size: max swara segments per training example.
+        window_stride: hop between window starts for tracks longer than
+            `window_size`. Must be positive.
     """
 
     def __init__(
@@ -380,28 +482,52 @@ class SaragaSwaraDataset(Dataset):
         raga_to_label: Dict[str, int],
         cache_dir: Path,
         pipeline_kwargs: dict,
+        window_size: int,
+        window_stride: int,
     ) -> None:
         unknown = {t.raga for t in tracks} - set(raga_to_label.keys())
         if unknown:
             raise DatasetError(f"Tracks reference ragas not in raga_to_label: {unknown}")
+        if window_stride <= 0:
+            raise DatasetError(f"window_stride must be positive, got {window_stride}")
+        if window_size <= 0:
+            raise DatasetError(f"window_size must be positive, got {window_size}")
 
         self._tracks = list(tracks)
         self._raga_to_label = dict(raga_to_label)
-        self._cache_dir = cache_dir
-        self._pipeline_kwargs = pipeline_kwargs
+
+        # Sequences are resolved (cache hit or computed) once at construction
+        # time, not per __getitem__ call, so __len__ can be known up front
+        # and repeated epochs never re-touch the cache lookup per window.
+        self._sequences: List[np.ndarray] = [
+            load_or_compute_sequence(t, cache_dir, pipeline_kwargs) for t in self._tracks
+        ]
+
+        self._windows: List[Tuple[int, int, int]] = []  # (track_idx, start, end)
+        for track_idx, sequence in enumerate(self._sequences):
+            for start, end in _window_bounds(len(sequence), window_size, window_stride):
+                self._windows.append((track_idx, start, end))
 
     def __len__(self) -> int:
-        return len(self._tracks)
+        return len(self._windows)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
-        track = self._tracks[idx]
-        sequence = load_or_compute_sequence(track, self._cache_dir, self._pipeline_kwargs)
-        if sequence.shape[0] == 0:
-            raise DatasetError(
-                f"Track {track.track_id} produced zero swara segments; "
-                f"exclude it from the manifest before training."
-            )
-        return torch.from_numpy(sequence).long(), self._raga_to_label[track.raga]
+        track_idx, start, end = self._windows[idx]
+        window = self._sequences[track_idx][start:end]
+        label = self._raga_to_label[self._tracks[track_idx].raga]
+        return torch.from_numpy(window).long(), label
+
+    def labels(self) -> List[int]:
+        """
+        Per-window labels in dataset order. Used for class-weighting the
+        training loss against what the model actually trains on -- track
+        count alone would understate the weight a raga needs if its tracks
+        happen to be short (fewer windows) relative to other classes.
+        """
+        return [
+            self._raga_to_label[self._tracks[track_idx].raga]
+            for track_idx, _, _ in self._windows
+        ]
 
 
 def collate_fn(

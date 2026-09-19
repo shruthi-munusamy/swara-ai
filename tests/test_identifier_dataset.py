@@ -21,9 +21,11 @@ from src.identifier.dataset import (
     discover_tracks,
     load_or_compute_sequence,
     raga_counts,
+    raga_durations,
     segment_to_class_index,
     stratified_split,
 )
+from src.identifier.dataset import _cache_path, _window_bounds
 from src.pitch.extractor import CREPE_SAMPLE_RATE
 
 PIPELINE_KWARGS = dict(
@@ -35,6 +37,10 @@ PIPELINE_KWARGS = dict(
     min_stable_ms=80.0,
     smoothing_window=5,
 )
+
+# Larger than any test sequence, so SaragaSwaraDataset collapses to one
+# window per track unless a test explicitly exercises windowing.
+NO_WINDOWING = dict(window_size=10_000, window_stride=10_000)
 
 
 # ----- Class indexing -----
@@ -148,38 +154,68 @@ class TestDiscoverTracks:
         assert "track_z" not in tracks
 
 
-# ----- raga_counts / build_mvp_raga_list -----
+# ----- raga_counts / raga_durations / build_mvp_raga_list -----
 
 class TestRagaCounts:
 
-    def test_counts_data_driven_not_alphabetical(self):
+    def test_counts_by_track_count_data_driven_not_alphabetical(self):
         tracks = [
-            TrackInfo("t1", Path("a"), 220.0, "Todi"),
-            TrackInfo("t2", Path("b"), 220.0, "Todi"),
-            TrackInfo("t3", Path("c"), 220.0, "Todi"),
-            TrackInfo("t4", Path("d"), 220.0, "Kalyani"),
+            TrackInfo("t1", Path("a"), 220.0, "Todi", 60.0),
+            TrackInfo("t2", Path("b"), 220.0, "Todi", 60.0),
+            TrackInfo("t3", Path("c"), 220.0, "Todi", 60.0),
+            TrackInfo("t4", Path("d"), 220.0, "Kalyani", 60.0),
         ]
-        top = build_mvp_raga_list(tracks, top_k=1)
+        top = build_mvp_raga_list(tracks, top_k=1, by="count")
         assert top == ["Todi"]
 
     def test_raga_counts_tally(self):
         tracks = [
-            TrackInfo("t1", Path("a"), 220.0, "Todi"),
-            TrackInfo("t2", Path("b"), 220.0, "Kalyani"),
+            TrackInfo("t1", Path("a"), 220.0, "Todi", 60.0),
+            TrackInfo("t2", Path("b"), 220.0, "Kalyani", 60.0),
         ]
         counts = raga_counts(tracks)
         assert counts["Todi"] == 1
         assert counts["Kalyani"] == 1
 
+    def test_invalid_selection_metric_raises(self):
+        tracks = [TrackInfo("t1", Path("a"), 220.0, "Todi", 60.0)]
+        with pytest.raises(DatasetError):
+            build_mvp_raga_list(tracks, top_k=1, by="popularity")
+
+
+class TestRagaDurations:
+
+    def test_durations_summed_per_raga(self):
+        tracks = [
+            TrackInfo("t1", Path("a"), 220.0, "Todi", 60.0),
+            TrackInfo("t2", Path("b"), 220.0, "Todi", 30.0),
+            TrackInfo("t3", Path("c"), 220.0, "Kalyani", 200.0),
+        ]
+        durations = raga_durations(tracks)
+        assert durations["Todi"] == pytest.approx(90.0)
+        assert durations["Kalyani"] == pytest.approx(200.0)
+
+    def test_selection_by_duration_beats_selection_by_count(self):
+        # Kalyani: 1 long track. Todi: 3 short tracks that outnumber it but
+        # total less audio. Duration-based selection should prefer Kalyani.
+        tracks = [
+            TrackInfo("t1", Path("a"), 220.0, "Todi", 10.0),
+            TrackInfo("t2", Path("b"), 220.0, "Todi", 10.0),
+            TrackInfo("t3", Path("c"), 220.0, "Todi", 10.0),
+            TrackInfo("t4", Path("d"), 220.0, "Kalyani", 1000.0),
+        ]
+        assert build_mvp_raga_list(tracks, top_k=1, by="duration") == ["Kalyani"]
+        assert build_mvp_raga_list(tracks, top_k=1, by="count") == ["Todi"]
+
 
 # ----- stratified_split -----
 
-def _fake_tracks(raga_sizes: dict) -> list:
+def _fake_tracks(raga_sizes: dict, duration_seconds: float = 120.0) -> list:
     tracks = []
     i = 0
     for raga, n in raga_sizes.items():
         for _ in range(n):
-            tracks.append(TrackInfo(f"t{i}", Path(f"p{i}"), 220.0, raga))
+            tracks.append(TrackInfo(f"t{i}", Path(f"p{i}"), 220.0, raga, duration_seconds))
             i += 1
     return tracks
 
@@ -226,7 +262,10 @@ def sine_track(tmp_path):
     """A short synthetic track: steady Sa (220 Hz tonic == the sung pitch)."""
     audio_path = tmp_path / "sine.wav"
     _write_sine(audio_path, 220.0, duration_s=1.5, sr=CREPE_SAMPLE_RATE)
-    return TrackInfo(track_id="sine_track", audio_path=audio_path, tonic_hz=220.0, raga="Sankarabharanam")
+    return TrackInfo(
+        track_id="sine_track", audio_path=audio_path, tonic_hz=220.0,
+        raga="Sankarabharanam", duration_seconds=1.5,
+    )
 
 
 class TestComputeSwaraSequence:
@@ -268,16 +307,45 @@ class TestCaching:
         assert (cache_dir / "sine_track.npz").exists()
 
 
+# ----- _window_bounds -----
+
+class TestWindowBounds:
+
+    def test_short_sequence_gets_single_window(self):
+        assert _window_bounds(seq_len=10, window_size=48, stride=24) == [(0, 10)]
+
+    def test_exact_window_size_gets_single_window(self):
+        assert _window_bounds(seq_len=48, window_size=48, stride=24) == [(0, 48)]
+
+    def test_empty_sequence_gets_no_windows(self):
+        assert _window_bounds(seq_len=0, window_size=48, stride=24) == []
+
+    def test_long_sequence_gets_overlapping_windows(self):
+        bounds = _window_bounds(seq_len=100, window_size=48, stride=24)
+        assert bounds[0] == (0, 48)
+        assert bounds[1] == (24, 72)
+        # every window is exactly window_size long
+        assert all(end - start == 48 for start, end in bounds)
+
+    def test_tail_is_covered_even_off_stride(self):
+        bounds = _window_bounds(seq_len=100, window_size=48, stride=24)
+        assert bounds[-1][1] == 100
+
+
 # ----- SaragaSwaraDataset + collate_fn -----
 
 class TestSaragaSwaraDataset:
 
-    def test_len_matches_track_count(self, sine_track, tmp_path):
-        ds = SaragaSwaraDataset([sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS)
+    def test_len_matches_track_count_when_no_windowing(self, sine_track, tmp_path):
+        ds = SaragaSwaraDataset(
+            [sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS, **NO_WINDOWING
+        )
         assert len(ds) == 1
 
     def test_getitem_returns_tensor_and_label(self, sine_track, tmp_path):
-        ds = SaragaSwaraDataset([sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS)
+        ds = SaragaSwaraDataset(
+            [sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS, **NO_WINDOWING
+        )
         sequence, label = ds[0]
         assert isinstance(sequence, torch.Tensor)
         assert sequence.dtype == torch.long
@@ -285,13 +353,81 @@ class TestSaragaSwaraDataset:
 
     def test_unknown_raga_raises(self, sine_track, tmp_path):
         with pytest.raises(DatasetError):
-            SaragaSwaraDataset([sine_track], {"Todi": 0}, tmp_path / "cache", PIPELINE_KWARGS)
+            SaragaSwaraDataset([sine_track], {"Todi": 0}, tmp_path / "cache", PIPELINE_KWARGS, **NO_WINDOWING)
+
+    def test_non_positive_window_size_raises(self, sine_track, tmp_path):
+        with pytest.raises(DatasetError):
+            SaragaSwaraDataset(
+                [sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS,
+                window_size=0, window_stride=24,
+            )
+
+    def test_non_positive_stride_raises(self, sine_track, tmp_path):
+        with pytest.raises(DatasetError):
+            SaragaSwaraDataset(
+                [sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS,
+                window_size=48, window_stride=0,
+            )
 
     def test_labels_consistent_across_datasets_sharing_mapping(self, sine_track, tmp_path):
         mapping = {"Sankarabharanam": 3, "Kalyani": 1}
-        ds1 = SaragaSwaraDataset([sine_track], mapping, tmp_path / "cache", PIPELINE_KWARGS)
-        ds2 = SaragaSwaraDataset([sine_track], mapping, tmp_path / "cache", PIPELINE_KWARGS)
+        ds1 = SaragaSwaraDataset(
+            [sine_track], mapping, tmp_path / "cache", PIPELINE_KWARGS, **NO_WINDOWING
+        )
+        ds2 = SaragaSwaraDataset(
+            [sine_track], mapping, tmp_path / "cache", PIPELINE_KWARGS, **NO_WINDOWING
+        )
         assert ds1[0][1] == ds2[0][1] == 3
+
+    def test_labels_method_matches_getitem_labels(self, sine_track, tmp_path):
+        ds = SaragaSwaraDataset(
+            [sine_track], {"Sankarabharanam": 0}, tmp_path / "cache", PIPELINE_KWARGS,
+            window_size=2, window_stride=1,
+        )
+        expected = [ds[i][1] for i in range(len(ds))]
+        assert ds.labels() == expected
+
+    def test_windowing_produces_multiple_examples_from_one_long_track(self, tmp_path):
+        # Seed the cache directly with a synthetic sequence: a real
+        # steady-pitch clip always collapses to one segment (one segment =
+        # one held pitch), so it can never exceed window_size regardless of
+        # window settings. Seeding sidesteps that and also skips CREPE.
+        cache_dir = tmp_path / "cache"
+        cache_dir.mkdir()
+        track = TrackInfo("long_track", Path("unused.wav"), 220.0, "Sankarabharanam", 300.0)
+        np.savez(_cache_path(cache_dir, track.track_id), swara_indices=np.arange(60, dtype=np.int64) % NUM_SWARA_CLASSES)
+
+        ds = SaragaSwaraDataset(
+            [track], {"Sankarabharanam": 0}, cache_dir, PIPELINE_KWARGS,
+            window_size=10, window_stride=5,
+        )
+        assert len(ds) > 1
+        for i in range(len(ds)):
+            _, label = ds[i]
+            assert label == 0
+
+    def test_windows_do_not_cross_track_boundaries(self, tmp_path):
+        # Two tracks with distinguishable synthetic sequences (all low
+        # classes vs. all high classes); every window's content must come
+        # from exactly one track's own sequence, never a blend.
+        cache_dir = tmp_path / "cache"
+        cache_dir.mkdir()
+        track_a = TrackInfo("track_a", Path("a.wav"), 220.0, "Sankarabharanam", 300.0)
+        track_b = TrackInfo("track_b", Path("b.wav"), 220.0, "Kalyani", 300.0)
+        seq_a = np.zeros(60, dtype=np.int64)       # all class 0
+        seq_b = np.full(60, 11, dtype=np.int64)    # all class 11
+        np.savez(_cache_path(cache_dir, track_a.track_id), swara_indices=seq_a)
+        np.savez(_cache_path(cache_dir, track_b.track_id), swara_indices=seq_b)
+
+        ds = SaragaSwaraDataset(
+            [track_a, track_b], {"Sankarabharanam": 0, "Kalyani": 1}, cache_dir, PIPELINE_KWARGS,
+            window_size=10, window_stride=5,
+        )
+        assert len(ds) > 2  # confirms both tracks actually got windowed
+        for i in range(len(ds)):
+            window, label = ds[i]
+            expected_value = 0 if label == 0 else 11
+            assert torch.all(window == expected_value)
 
 
 class TestCollateFn:

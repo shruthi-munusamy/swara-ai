@@ -118,9 +118,16 @@ def main() -> int:
         smoothing_window=swara_cfg["smoothing_window"],
     )
     cache_dir = Path(config["paths"]["data_dir"]) / "processed" / "features"
+    window_size = id_cfg["window_size_segments"]
+    window_stride = id_cfg["window_stride_segments"]
 
-    train_ds = SaragaSwaraDataset(train_tracks, raga_to_label, cache_dir, pipeline_kwargs)
-    val_ds = SaragaSwaraDataset(val_tracks, raga_to_label, cache_dir, pipeline_kwargs)
+    train_ds = SaragaSwaraDataset(
+        train_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride
+    )
+    val_ds = SaragaSwaraDataset(
+        val_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride
+    )
+    print(f"windowed examples: train={len(train_ds)}  val={len(val_ds)}")
 
     train_loader = DataLoader(
         train_ds, batch_size=id_cfg["batch_size"], shuffle=True, collate_fn=collate_fn
@@ -147,7 +154,7 @@ def main() -> int:
     )
 
     checkpoint_path = Path(config["paths"]["models_dir"]) / "identifier_best.pt"
-    train_labels = [raga_to_label[t.raga] for t in train_tracks]
+    train_labels = train_ds.labels()
 
     history = train(
         model=model,
