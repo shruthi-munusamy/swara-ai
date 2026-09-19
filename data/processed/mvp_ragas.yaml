@@ -1,0 +1,35 @@
+ragas:
+- Bhairavi
+- Tōḍi
+- Ṣanmukhapriya
+- Kāṁbhōji
+- Mōhanaṁ
+- Kamās
+- Bēgaḍa
+- Rītigauḷa
+- Kalyāṇi
+- Behāg
+selected_by: duration
+counts:
+  Bhairavi: 5
+  Tōḍi: 7
+  Ṣanmukhapriya: 3
+  Kāṁbhōji: 3
+  Mōhanaṁ: 4
+  Kamās: 7
+  Bēgaḍa: 3
+  Rītigauḷa: 3
+  Kalyāṇi: 3
+  Behāg: 4
+duration_minutes:
+  Bhairavi: 162.8
+  Tōḍi: 148.9
+  Ṣanmukhapriya: 142.4
+  Kāṁbhōji: 120.2
+  Mōhanaṁ: 87.5
+  Kamās: 83.2
+  Bēgaḍa: 64.0
+  Rītigauḷa: 60.4
+  Kalyāṇi: 40.4
+  Behāg: 17.2
+seed: 42

@@ -90,6 +90,7 @@ def main() -> int:
             },
             f,
             sort_keys=False,
+            allow_unicode=True,
         )
     print(f"Wrote {mvp_ragas_path}")
 
@@ -105,6 +106,7 @@ def main() -> int:
             },
             f,
             sort_keys=False,
+            allow_unicode=True,
         )
     print(f"Wrote {splits_path} (train={len(train)}, val={len(val)}, test={len(test)})")
 

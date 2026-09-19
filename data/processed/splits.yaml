@@ -1,0 +1,48 @@
+seed: 42
+train:
+- Vignesh Ishwar at Nada Inbam by Vignesh Ishwar/Idhuthaano Thillai Sthalam
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/Oorilen Kaani Illai
+- Srividya Janakiraman at Arkay by Srividya Janakiraman/Nee Sari evvaramma
+- Vignesh Ishwar at Nada Inbam by Vignesh Ishwar/Amba Kamakshi
+- Rithvik Raja at Arkay by Rithvik Raja/Chintayama Kanda
+- Kanakadurga Venkatesh at Arkay by Kanakadurga Venkatesh/Lokavana Chatura
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/Vanajakshi - Varnam
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/Karupuram Naarumo
+- Live at Vani Mahal by Sanjay Subrahmanyan/Sarasadalanayana
+- Live at Kamarajar Hall by Sanjay Subrahmanyan/Payum Oli Nee Yenakku
+- Live at Kamarajar Hall by Sanjay Subrahmanyan/Teerthakarayinile
+- Chaitra Sairam at Arkay by Chaitra Sairam/Shri Subramanyaya Namaste
+- Chaitra Sairam at Arkay by Chaitra Sairam/Rakta Ganapatim
+- Ashwath Narayanan at Arkay by Ashwath Narayanan/Evarura
+- Vasundara Rajagopal at Arkay by Vasundara Rajagopal/Ninnuvina Marigalada
+- Cherthala Ranganatha Sharma at Arkay by Cherthala Ranganatha Sharma/Karuna Nidhi
+  Illalo
+- Ashwath Narayanan at Arkay by Ashwath Narayanan/Eranapai
+- Vasundara Rajagopal at Arkay by Vasundara Rajagopal/Munnu Ravana
+- Live at Vani Mahal by Sanjay Subrahmanyan/Eranapai
+- Live at Vani Mahal by Sanjay Subrahmanyan/Saravanabhava Enum
+val:
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/Innamum Oru thalam
+- Live at Kamarajar Hall by Sanjay Subrahmanyan/Kamakshi
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/Nadopasana
+- Live at Vani Mahal by Sanjay Subrahmanyan/Paarengum
+- Ashwath Narayanan at Arkay by Ashwath Narayanan/Marubari
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/O Rangashayee
+- Sumithra Vasudev at Arkay by Sumithra Vasudev/Mati Matiki
+- Sanjay at Sastri Hall by Sanjay Subrahmanyan/Janani
+- Kanakadurga Venkatesh at Arkay by Kanakadurga Venkatesh/Koluvamaregatha
+- Live at Vani Mahal by Sanjay Subrahmanyan/Ragam Thanam Pallavi - Shanmukhapriya
+test:
+- Cherthala Ranganatha Sharma at Arkay by Cherthala Ranganatha Sharma/Idhu Thaano
+  Thillai Sthalam
+- Live at Vani Mahal by Sanjay Subrahmanyan/Sri Raghuvara Sugunaalaya
+- Vignesh Ishwar at Nada Inbam by Vignesh Ishwar/Lokavana Chatura
+- Modhumudi Sudhakar at Arkay by Modhumudi Sudhakar/Sundari Nee Divya
+- Kuldeep Pai at Arkay by Kuldeep Pai/Brochevarevarura
+- Rithvik Raja at Arkay by Rithvik Raja/Seetapati Namanasuna
+- Live at Vani Mahal by Sanjay Subrahmanyan/Aru marundu
+- V Shankarnarayanan at Arkay by V Shankaranarayanan/Shloka
+- Sumithra Vasudev at Arkay by Sumithra Vasudev/Vanajaksha Ninne Kori
+- Kuldeep Pai at Arkay by Kuldeep Pai/Thappi Bratikipova
+- Rithvik Raja at Arkay by Rithvik Raja/Emani Migula
+- Mahati at Arkay by Mahati/Ragam Tanam Pallavi

@@ -20,7 +20,14 @@ env/
 
 # Project
 data/raw/
-data/processed/
+data/processed/*
+# Reproducibility artifacts: small, hand-inspectable, define the MVP raga
+# set and splits -- unlike cached .npz features, these are meant to be
+# committed so training is reproducible from a fresh clone. (Negation only
+# works against the non-slash "data/processed/*" form -- a trailing-slash
+# directory exclusion stops git from descending in at all.)
+!data/processed/mvp_ragas.yaml
+!data/processed/splits.yaml
 models/*.pt
 models/*.ckpt
 wandb/
