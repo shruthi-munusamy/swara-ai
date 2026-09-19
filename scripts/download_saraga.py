@@ -145,25 +145,34 @@ def _find_metadata_files(root: Path) -> list[Path]:
     return sorted(p for p in root.rglob("*.json") if "__MACOSX" not in p.parts)
 
 
+# Labels Saraga uses in the `raaga` field that name a composition *form*
+# spanning multiple ragas (e.g. Rāgamālika), not a single raga. Excluded
+# from the summary the same way a missing raga label is -- see the matching
+# constant/rationale in src/identifier/dataset.py.
+NON_RAGA_LABELS = frozenset({"Rāgamālika"})
+
+
 def _extract_raaga_name(metadata: dict) -> str | None:
     """
     Pull the raaga name out of a Saraga metadata JSON dict.
 
     `raaga` is documented as a list of dicts (a track can nominally list
     more than one, though in practice concerts are single-raga). We take
-    the first entry's `name` field. Returns None if absent or malformed —
-    tracks without a parseable raaga are excluded from the count rather
-    than crashing the whole summary.
+    the first entry's `name` field. Returns None if absent, malformed, or a
+    known non-raga form label -- tracks without a usable raga are excluded
+    from the count rather than crashing the whole summary.
     """
     raaga = metadata.get("raaga")
     if not raaga or not isinstance(raaga, list):
         return None
     first = raaga[0]
     if isinstance(first, dict):
-        return first.get("name")
-    if isinstance(first, str):
-        return first
-    return None
+        name = first.get("name")
+    elif isinstance(first, str):
+        name = first
+    else:
+        return None
+    return None if name in NON_RAGA_LABELS else name
 
 
 def _print_summary(dest_dir: Path) -> None:

@@ -155,17 +155,32 @@ def _read_duration_seconds(audio_path: Path) -> float:
     return float(librosa.get_duration(path=str(audio_path)))
 
 
+# Labels Saraga uses in the `raaga` metadata field that name a composition
+# *form*, not a single raga (a Rāgamālika performance traverses several
+# ragas within one piece, with no sub-raga breakdown recorded). Treated the
+# same as a missing raga label: there's no single coherent swara set for
+# the identifier to learn from a track labeled this way. Confirmed with
+# Shruthi rather than silently including or excluding it.
+NON_RAGA_LABELS: frozenset = frozenset({"Rāgamālika"})
+
+
 def _extract_raaga_name(metadata: dict) -> Optional[str]:
-    """Same parsing rule as scripts/download_saraga.py's summary printer."""
+    """
+    Same parsing rule as scripts/download_saraga.py's summary printer.
+    Returns None for both a missing raga field and a known non-raga label
+    (see NON_RAGA_LABELS) -- callers treat both as "no usable raga label".
+    """
     raaga = metadata.get("raaga")
     if not raaga or not isinstance(raaga, list):
         return None
     first = raaga[0]
     if isinstance(first, dict):
-        return first.get("name")
-    if isinstance(first, str):
-        return first
-    return None
+        name = first.get("name")
+    elif isinstance(first, str):
+        name = first
+    else:
+        return None
+    return None if name in NON_RAGA_LABELS else name
 
 
 def discover_tracks(saraga_root: Path) -> List[TrackInfo]:

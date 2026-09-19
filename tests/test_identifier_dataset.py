@@ -114,6 +114,15 @@ class TestDiscoverTracks:
         assert tracks["track_a"].tonic_hz == pytest.approx(220.0)
         assert tracks["track_a"].raga == "Kalyani"
 
+    def test_excludes_ragamalika_as_not_a_single_raga(self, tmp_path):
+        # Rāgamālika is a composition form spanning multiple ragas, not a
+        # single raga -- Saraga labels it this way with no sub-raga
+        # breakdown, so it must be treated like a missing raga label.
+        root = tmp_path / "saraga"
+        _make_track_dir(root, "track_rm", raga="Rāgamālika")
+        tracks = {t.track_id: t for t in discover_tracks(root)}
+        assert "track_rm" not in tracks
+
     def test_ignores_macosx_resource_fork_files(self, saraga_fixture):
         # Real Saraga zips extract a __MACOSX/ tree of AppleDouble sidecar
         # files (._*.json) that aren't valid UTF-8/JSON. discover_tracks
