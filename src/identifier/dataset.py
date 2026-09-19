@@ -61,6 +61,11 @@ from src.pitch.extractor import extract_pitch
 from src.swara.definitions import SWARASTHANA_CENTS
 from src.swara.segmenter import segment_swaras
 
+# Minimum tracks a raga needs to place at least one in each of
+# train/val/test. Shared between build_mvp_raga_list (must not select a
+# raga it's impossible to split) and stratified_split (enforces it).
+MIN_TRACKS_PER_RAGA: int = 3
+
 # The 12 unique cents positions swarasthanas occupy, in ascending order.
 # All SWARASTHANA_CENTS values are multiples of 100 by construction (12-TET),
 # so index = cents / 100 is a valid, collision-free mapping -- no lookup
@@ -360,6 +365,13 @@ def build_mvp_raga_list(tracks: Sequence[TrackInfo], top_k: int, by: str = "dura
     `raga_durations` for why this beats track count as the selection metric
     on this dataset. `by="count"` ranks by track count instead; kept for
     comparison, not the default.
+
+    Ragas with fewer than `MIN_TRACKS_PER_RAGA` tracks are excluded before
+    ranking, regardless of `by`. Without this, duration-based ranking can
+    select a raga with a single very long track (lots of audio, zero split
+    diversity) that `stratified_split` would immediately reject -- found
+    running against the real corpus, where a single 60-minute track
+    outranked ragas with 3x the track count on duration alone.
     """
     if by == "duration":
         weights = raga_durations(tracks)
@@ -367,7 +379,10 @@ def build_mvp_raga_list(tracks: Sequence[TrackInfo], top_k: int, by: str = "dura
         weights = raga_counts(tracks)
     else:
         raise DatasetError(f"by must be 'duration' or 'count', got {by!r}")
-    return [name for name, _ in weights.most_common(top_k)]
+
+    counts = raga_counts(tracks)
+    eligible = {name: w for name, w in weights.items() if counts[name] >= MIN_TRACKS_PER_RAGA}
+    return [name for name, _ in Counter(eligible).most_common(top_k)]
 
 
 def stratified_split(
@@ -381,8 +396,8 @@ def stratified_split(
     (approximately) the same per-raga proportions as the full set.
 
     Raises:
-        DatasetError: if any raga has fewer than 3 tracks (can't place at
-            least one in each of train/val/test).
+        DatasetError: if any raga has fewer than MIN_TRACKS_PER_RAGA tracks
+            (can't place at least one in each of train/val/test).
     """
     test_frac = 1.0 - train_frac - val_frac
     if test_frac <= 0:
@@ -395,10 +410,11 @@ def stratified_split(
         by_raga.setdefault(t.raga, []).append(t)
 
     for raga, group in by_raga.items():
-        if len(group) < 3:
+        if len(group) < MIN_TRACKS_PER_RAGA:
             raise DatasetError(
-                f"Raga {raga!r} has only {len(group)} track(s); need >= 3 to "
-                f"place at least one in each of train/val/test."
+                f"Raga {raga!r} has only {len(group)} track(s); need >= "
+                f"{MIN_TRACKS_PER_RAGA} to place at least one in each of "
+                f"train/val/test."
             )
 
     rng = np.random.default_rng(seed)

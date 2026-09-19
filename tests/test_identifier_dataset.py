@@ -195,17 +195,32 @@ class TestRagaDurations:
         assert durations["Todi"] == pytest.approx(90.0)
         assert durations["Kalyani"] == pytest.approx(200.0)
 
+    def test_excludes_ragas_below_minimum_track_count_even_if_longest(self):
+        # A single very long track shouldn't outrank ragas with enough
+        # tracks to actually form a valid train/val/test split.
+        tracks = [
+            TrackInfo("t1", Path("a"), 220.0, "Lonely Raga", 10_000.0),  # 1 track, huge duration
+            TrackInfo("t2", Path("b"), 220.0, "Common Raga", 10.0),
+            TrackInfo("t3", Path("c"), 220.0, "Common Raga", 10.0),
+            TrackInfo("t4", Path("d"), 220.0, "Common Raga", 10.0),
+        ]
+        top = build_mvp_raga_list(tracks, top_k=1, by="duration")
+        assert top == ["Common Raga"]
+
     def test_selection_by_duration_beats_selection_by_count(self):
-        # Kalyani: 1 long track. Todi: 3 short tracks that outnumber it but
-        # total less audio. Duration-based selection should prefer Kalyani.
+        # Both ragas have the same track count (3, clearing the minimum),
+        # but Todi's tracks are much shorter in total. Duration-based
+        # selection should prefer Kalyani; count-based should tie and fall
+        # back to whichever Counter.most_common happens to list first.
         tracks = [
             TrackInfo("t1", Path("a"), 220.0, "Todi", 10.0),
             TrackInfo("t2", Path("b"), 220.0, "Todi", 10.0),
             TrackInfo("t3", Path("c"), 220.0, "Todi", 10.0),
-            TrackInfo("t4", Path("d"), 220.0, "Kalyani", 1000.0),
+            TrackInfo("t4", Path("d"), 220.0, "Kalyani", 400.0),
+            TrackInfo("t5", Path("e"), 220.0, "Kalyani", 400.0),
+            TrackInfo("t6", Path("f"), 220.0, "Kalyani", 400.0),
         ]
         assert build_mvp_raga_list(tracks, top_k=1, by="duration") == ["Kalyani"]
-        assert build_mvp_raga_list(tracks, top_k=1, by="count") == ["Todi"]
 
 
 # ----- stratified_split -----
