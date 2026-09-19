@@ -140,7 +140,9 @@ def _extract(zip_path: Path, dest_dir: Path) -> None:
 
 
 def _find_metadata_files(root: Path) -> list[Path]:
-    return sorted(root.rglob("*.json"))
+    # __MACOSX/ holds AppleDouble resource-fork sidecar files (._*.json) --
+    # binary garbage created by macOS zip tooling, not real track metadata.
+    return sorted(p for p in root.rglob("*.json") if "__MACOSX" not in p.parts)
 
 
 def _extract_raaga_name(metadata: dict) -> str | None:
@@ -166,7 +168,10 @@ def _extract_raaga_name(metadata: dict) -> str | None:
 
 def _print_summary(dest_dir: Path) -> None:
     metadata_files = _find_metadata_files(dest_dir)
-    audio_files = list(dest_dir.rglob("*.mp3")) + list(dest_dir.rglob("*.wav"))
+    audio_files = [
+        p for p in list(dest_dir.rglob("*.mp3")) + list(dest_dir.rglob("*.wav"))
+        if "__MACOSX" not in p.parts
+    ]
 
     total_bytes = sum(f.stat().st_size for f in dest_dir.rglob("*") if f.is_file())
 
@@ -181,7 +186,7 @@ def _print_summary(dest_dir: Path) -> None:
         try:
             with open(mf, "r", encoding="utf-8") as f:
                 metadata = json.load(f)
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
             unparsed += 1
             continue
         name = _extract_raaga_name(metadata)

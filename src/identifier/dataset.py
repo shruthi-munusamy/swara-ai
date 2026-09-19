@@ -163,12 +163,21 @@ def discover_tracks(saraga_root: Path) -> List[TrackInfo]:
     tracks: List[TrackInfo] = []
     skipped = 0
 
-    for metadata_path in sorted(saraga_root.rglob("*.json")):
+    # __MACOSX/ holds AppleDouble resource-fork sidecar files (._*.json) --
+    # binary garbage from macOS zip tooling, not real track metadata. They
+    # fail to decode as UTF-8/JSON, so they'd otherwise just fall into the
+    # "skipped" bucket below, but filtering them out up front keeps the
+    # skip count meaningful (real incomplete tracks vs. zip artifacts).
+    metadata_paths = sorted(
+        p for p in saraga_root.rglob("*.json") if "__MACOSX" not in p.parts
+    )
+
+    for metadata_path in metadata_paths:
         track_dir = metadata_path.parent
         try:
             with open(metadata_path, "r", encoding="utf-8") as f:
                 metadata = json.load(f)
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
             skipped += 1
             continue
 

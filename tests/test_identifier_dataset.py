@@ -108,6 +108,18 @@ class TestDiscoverTracks:
         assert tracks["track_a"].tonic_hz == pytest.approx(220.0)
         assert tracks["track_a"].raga == "Kalyani"
 
+    def test_ignores_macosx_resource_fork_files(self, saraga_fixture):
+        # Real Saraga zips extract a __MACOSX/ tree of AppleDouble sidecar
+        # files (._*.json) that aren't valid UTF-8/JSON. discover_tracks
+        # must skip them silently rather than crashing or miscounting.
+        macosx_dir = saraga_fixture / "__MACOSX" / "track_a"
+        macosx_dir.mkdir(parents=True)
+        (macosx_dir / "._track_a.json").write_bytes(b"\x00\x01\xb4\xff not valid json")
+
+        tracks = discover_tracks(saraga_fixture)
+        track_ids = {t.track_id for t in tracks}
+        assert track_ids == {"track_a", "track_b", "track_c"}
+
     def test_instrument_stem_excluded_from_mix_candidates(self, tmp_path):
         root = tmp_path / "saraga"
         track_dir = _make_track_dir(root, "track_x", raga="Todi")
