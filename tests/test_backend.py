@@ -83,3 +83,22 @@ class TestRagamsEndpoint:
         names = response.json()
         assert "Kalyani" in names
         assert len(names) == 72
+
+
+class TestIdentifierRagasEndpoint:
+
+    def test_returns_exactly_the_mvp_ten(self):
+        response = client.get("/identifier-ragas")
+        assert response.status_code == 200
+        names = response.json()
+        assert len(names) == 10
+
+    def test_names_do_not_exactly_match_melakarta_registry(self):
+        # Three of the MVP-10 (Todi, Shanmukhapriya, Kalyani) ARE melakartas
+        # conceptually, but Saraga's IAST-transliterated names (Tōḍi,
+        # Ṣanmukhapriya, Kalyāṇi) never string-match the registry's ASCII
+        # names -- documenting the real, current (non-)overlap rather than
+        # asserting a cross-name-system match that doesn't exist yet.
+        identifier_ragas = set(client.get("/identifier-ragas").json())
+        all_ragams = set(client.get("/ragams").json())
+        assert identifier_ragas & all_ragams == set()

@@ -143,7 +143,17 @@ h1 {
   color: var(--text-secondary);
 }
 
+.hint {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 0.75rem;
   background: var(--accent);
   color: #fff;
@@ -154,6 +164,21 @@ button {
   cursor: pointer;
   transition: opacity 0.15s ease;
   font-family: inherit;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 button:hover:not(:disabled) {
@@ -179,7 +204,26 @@ button:disabled {
   margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
+}
+
+.result-card {
+  animation: rise 0.3s ease both;
+}
+
+.result-card:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .results h2 {
@@ -188,7 +232,18 @@ button:disabled {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin: 0 0 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.result-heading {
+  margin-bottom: 0.9rem;
+}
+
+.scope-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 /* ----- confidence meters (sequential, single hue -- magnitude, not identity) ----- */
@@ -204,13 +259,18 @@ button:disabled {
 
 .predictions li {
   display: grid;
-  grid-template-columns: 130px 1fr 52px;
+  grid-template-columns: minmax(90px, 160px) 1fr 52px;
   align-items: center;
   gap: 0.8rem;
 }
 
-.predictions li:first-child .raga-name {
+.predictions li.top-prediction .raga-name {
   color: var(--text-primary);
+  font-weight: 700;
+}
+
+.predictions li.top-prediction .bar-track {
+  height: 12px;
 }
 
 .raga-name {
@@ -220,6 +280,21 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-wash);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .bar-track {
@@ -256,6 +331,11 @@ button:disabled {
   color: var(--text-primary);
   font-size: 1.3rem;
   font-variant-numeric: tabular-nums;
+}
+
+.score-detail {
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .segments {

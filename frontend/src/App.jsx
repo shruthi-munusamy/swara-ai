@@ -7,6 +7,7 @@ export default function App() {
   const [shruthiHz, setShruthiHz] = useState(220)
   const [targetRagam, setTargetRagam] = useState('')
   const [ragams, setRagams] = useState([])
+  const [identifierRagas, setIdentifierRagas] = useState([])
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -16,6 +17,11 @@ export default function App() {
       .then((r) => r.json())
       .then(setRagams)
       .catch(() => setRagams([]))
+
+    fetch(`${API_BASE}/identifier-ragas`)
+      .then((r) => r.json())
+      .then(setIdentifierRagas)
+      .catch(() => setIdentifierRagas([]))
   }, [])
 
   async function handleSubmit(e) {
@@ -88,9 +94,11 @@ export default function App() {
                 </option>
               ))}
             </select>
+            <span className="hint">All 72 melakarta ragams — a separate, rule-based check from identification below.</span>
           </label>
 
           <button type="submit" disabled={loading}>
+            {loading && <span className="spinner" aria-hidden="true" />}
             {loading ? 'Analyzing…' : 'Analyze'}
           </button>
         </form>
@@ -100,15 +108,25 @@ export default function App() {
 
       {result && (
         <div className="results">
-          <section>
-            <h2>Raga identification</h2>
+          <section className="card result-card">
+            <div className="result-heading">
+              <h2>Raga identification</h2>
+              {identifierRagas.length > 0 && (
+                <p className="scope-note">
+                  Predicts among the {identifierRagas.length} ragas it was trained on: {identifierRagas.join(', ')}.
+                </p>
+              )}
+            </div>
             {result.predictions.length === 0 ? (
               <p className="empty-state">No swara segments detected.</p>
             ) : (
               <ul className="predictions">
-                {result.predictions.map((p) => (
-                  <li key={p.raga}>
-                    <span className="raga-name">{p.raga}</span>
+                {result.predictions.map((p, i) => (
+                  <li key={p.raga} className={i === 0 ? 'top-prediction' : ''}>
+                    <span className="raga-name">
+                      {p.raga}
+                      {i === 0 && <span className="badge">most likely</span>}
+                    </span>
                     <div className="bar-track">
                       <div className="bar-fill" style={{ width: `${p.confidence * 100}%` }} />
                     </div>
@@ -120,11 +138,13 @@ export default function App() {
           </section>
 
           {result.adherence_score !== null && result.adherence_score !== undefined && (
-            <section className="adherence">
+            <section className="card result-card adherence">
               <h2>Adherence to {result.adherence_ragam}</h2>
               <p className="score">
                 <strong>{(result.adherence_score * 100).toFixed(1)}%</strong>{' '}
-                ({result.num_segments - result.num_out_of_raga}/{result.num_segments} segments in raga)
+                <span className="score-detail">
+                  ({result.num_segments - result.num_out_of_raga}/{result.num_segments} segments in raga)
+                </span>
               </p>
               <ul className="segments">
                 {result.segments.map((s, i) => (

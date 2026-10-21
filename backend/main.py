@@ -17,6 +17,7 @@ from typing import List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import yaml
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -67,6 +68,20 @@ class AnalyzeResponse(BaseModel):
 def list_ragams() -> List[str]:
     """All melakarta ragam names, for the frontend's target-ragam dropdown."""
     return [r.name for r in load_ragams().all_ragams()]
+
+
+@app.get("/identifier-ragas")
+def list_identifier_ragas() -> List[str]:
+    """
+    The identifier's actual trained vocabulary (MVP-10) -- a strict subset
+    of /ragams, and mostly non-overlapping (most are janya ragas not in
+    the melakarta registry at all). The frontend uses this to disclose the
+    identifier's real scope rather than letting a user assume it covers
+    everything /ragams lists.
+    """
+    processed_dir = Path(_config["paths"]["data_dir"]) / "processed"
+    with open(processed_dir / "mvp_ragas.yaml", "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)["ragas"]
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
