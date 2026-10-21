@@ -45,3 +45,7 @@ tf_logs/
 *.mp3
 *.flac
 !data/samples/*.wav
+
+# Frontend
+frontend/node_modules/
+frontend/dist/

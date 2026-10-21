@@ -25,5 +25,11 @@ requests>=2.31.0
 # Experiment tracking (phase 4)
 wandb>=0.16.0
 
+# Web backend (demo)
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9
+
 # Testing
 pytest>=7.4.0
+httpx>=0.27.0   # required by fastapi.testclient
