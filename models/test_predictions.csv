@@ -1,0 +1,13 @@
+track_id,true_raga,predicted_raga,confidence,top3
+Cherthala Ranganatha Sharma at Arkay by Cherthala Ranganatha Sharma/Idhu Thaano Thillai Sthalam,Behāg,Behāg,0.586,Behāg:0.586; Kamās:0.137; Tōḍi:0.078
+Live at Vani Mahal by Sanjay Subrahmanyan/Sri Raghuvara Sugunaalaya,Bhairavi,Bhairavi,0.471,Bhairavi:0.471; Tōḍi:0.353; Kāṁbhōji:0.083
+Vignesh Ishwar at Nada Inbam by Vignesh Ishwar/Lokavana Chatura,Bēgaḍa,Kāṁbhōji,0.351,Kāṁbhōji:0.351; Bēgaḍa:0.271; Mōhanaṁ:0.261
+Modhumudi Sudhakar at Arkay by Modhumudi Sudhakar/Sundari Nee Divya,Kalyāṇi,Kalyāṇi,0.307,Kalyāṇi:0.307; Bēgaḍa:0.223; Behāg:0.162
+Kuldeep Pai at Arkay by Kuldeep Pai/Brochevarevarura,Kamās,Kamās,0.706,Kamās:0.706; Bēgaḍa:0.113; Behāg:0.059
+Rithvik Raja at Arkay by Rithvik Raja/Seetapati Namanasuna,Kamās,Kāṁbhōji,0.376,Kāṁbhōji:0.376; Kamās:0.263; Mōhanaṁ:0.179
+Live at Vani Mahal by Sanjay Subrahmanyan/Aru marundu,Kāṁbhōji,Kāṁbhōji,0.324,Kāṁbhōji:0.324; Kamās:0.307; Bēgaḍa:0.185
+V Shankarnarayanan at Arkay by V Shankaranarayanan/Shloka,Mōhanaṁ,Mōhanaṁ,0.532,Mōhanaṁ:0.532; Bēgaḍa:0.273; Kāṁbhōji:0.167
+Sumithra Vasudev at Arkay by Sumithra Vasudev/Vanajaksha Ninne Kori,Rītigauḷa,Bēgaḍa,0.508,Bēgaḍa:0.508; Kāṁbhōji:0.184; Bhairavi:0.137
+Kuldeep Pai at Arkay by Kuldeep Pai/Thappi Bratikipova,Tōḍi,Tōḍi,0.737,Tōḍi:0.737; Ṣanmukhapriya:0.091; Bhairavi:0.086
+Rithvik Raja at Arkay by Rithvik Raja/Emani Migula,Tōḍi,Tōḍi,0.753,Tōḍi:0.753; Bhairavi:0.139; Ṣanmukhapriya:0.044
+Mahati at Arkay by Mahati/Ragam Tanam Pallavi,Ṣanmukhapriya,Ṣanmukhapriya,0.482,Ṣanmukhapriya:0.482; Bhairavi:0.240; Rītigauḷa:0.113
