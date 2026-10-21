@@ -81,7 +81,7 @@ def check_ragam_adherence(audio_path: Path, shruthi_hz: float, ragam_name: str, 
     return check_adherence(segments, ragam, min_confidence=config["adherence"]["min_confidence"])
 
 
-def _load_identifier_model(config: dict) -> Tuple[RagaLSTM, List[str]]:
+def load_identifier_model(config: dict) -> Tuple[RagaLSTM, List[str]]:
     cache_key = str(Path(config["paths"]["models_dir"]).resolve())
     if cache_key in _MODEL_CACHE:
         return _MODEL_CACHE[cache_key]
@@ -125,7 +125,7 @@ def identify_raga(audio_path: Path, shruthi_hz: float, config: dict, top_k: int 
         return []
 
     indices = [segment_to_class_index(seg.swara_candidates) for seg in segments]
-    model, label_names = _load_identifier_model(config)
+    model, label_names = load_identifier_model(config)
 
     seq = torch.tensor(indices, dtype=torch.long).unsqueeze(0)
     length = torch.tensor([len(indices)])
