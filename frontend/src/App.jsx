@@ -50,73 +50,80 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>Swara AI</h1>
-      <p className="subtitle">Carnatic raga identification &amp; ragam adherence</p>
+      <header className="header">
+        <div className="mark">Swara AI</div>
+        <h1>Raga identification &amp; adherence</h1>
+        <p className="subtitle">Upload a Carnatic vocal clip to identify its raga and check adherence.</p>
+      </header>
 
-      <form onSubmit={handleSubmit} className="form">
-        <label>
-          Audio clip
-          <input
-            type="file"
-            accept=".wav,.mp3,.flac,.ogg,.m4a"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-        </label>
+      <div className="card">
+        <form onSubmit={handleSubmit} className="form">
+          <label>
+            Audio clip
+            <input
+              type="file"
+              accept=".wav,.mp3,.flac,.ogg,.m4a"
+              onChange={(e) => setFile(e.target.files[0])}
+            />
+          </label>
 
-        <label>
-          Shruthi (Hz)
-          <input
-            type="number"
-            value={shruthiHz}
-            min="80"
-            max="400"
-            onChange={(e) => setShruthiHz(e.target.value)}
-          />
-        </label>
+          <label>
+            Shruthi (Hz)
+            <input
+              type="number"
+              value={shruthiHz}
+              min="80"
+              max="400"
+              onChange={(e) => setShruthiHz(e.target.value)}
+            />
+          </label>
 
-        <label>
-          Target ragam (optional, for adherence check)
-          <select value={targetRagam} onChange={(e) => setTargetRagam(e.target.value)}>
-            <option value="">— none —</option>
-            {ragams.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label>
+            Target ragam (optional, for adherence check)
+            <select value={targetRagam} onChange={(e) => setTargetRagam(e.target.value)}>
+              <option value="">— none —</option>
+              {ragams.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Analyzing…' : 'Analyze'}
-        </button>
-      </form>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Analyzing…' : 'Analyze'}
+          </button>
+        </form>
 
-      {error && <p className="error">{error}</p>}
+        {error && <p className="error">{error}</p>}
+      </div>
 
       {result && (
         <div className="results">
-          <h2>Raga identification</h2>
-          {result.predictions.length === 0 ? (
-            <p>No swara segments detected.</p>
-          ) : (
-            <ul className="predictions">
-              {result.predictions.map((p) => (
-                <li key={p.raga}>
-                  <span className="raga-name">{p.raga}</span>
-                  <div className="bar-track">
-                    <div className="bar-fill" style={{ width: `${p.confidence * 100}%` }} />
-                  </div>
-                  <span className="confidence">{(p.confidence * 100).toFixed(1)}%</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <section>
+            <h2>Raga identification</h2>
+            {result.predictions.length === 0 ? (
+              <p className="empty-state">No swara segments detected.</p>
+            ) : (
+              <ul className="predictions">
+                {result.predictions.map((p) => (
+                  <li key={p.raga}>
+                    <span className="raga-name">{p.raga}</span>
+                    <div className="bar-track">
+                      <div className="bar-fill" style={{ width: `${p.confidence * 100}%` }} />
+                    </div>
+                    <span className="confidence">{(p.confidence * 100).toFixed(1)}%</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {result.adherence_score !== null && result.adherence_score !== undefined && (
-            <div className="adherence">
+            <section className="adherence">
               <h2>Adherence to {result.adherence_ragam}</h2>
               <p className="score">
-                Score: <strong>{(result.adherence_score * 100).toFixed(1)}%</strong>{' '}
+                <strong>{(result.adherence_score * 100).toFixed(1)}%</strong>{' '}
                 ({result.num_segments - result.num_out_of_raga}/{result.num_segments} segments in raga)
               </p>
               <ul className="segments">
@@ -126,11 +133,11 @@ export default function App() {
                       {s.start_time.toFixed(2)}s–{s.end_time.toFixed(2)}s
                     </span>
                     <span>{s.candidates.join('/')}</span>
-                    <span>{s.in_raga ? '✓ in raga' : '✗ out of raga'}</span>
+                    <span className="status-label">{s.in_raga ? '✓ in raga' : '✗ out of raga'}</span>
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           )}
         </div>
       )}
