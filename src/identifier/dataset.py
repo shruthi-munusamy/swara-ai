@@ -560,6 +560,16 @@ class SaragaSwaraDataset(Dataset):
             for track_idx, _, _ in self._windows
         ]
 
+    def track_indices(self) -> List[int]:
+        """
+        Per-window index into the `tracks` list this dataset was built
+        from, in dataset order. Lets a caller aggregate window-level
+        predictions back to one-per-track (e.g. the baselines' majority
+        vote, or the identifier's own mean-softmax aggregation) without
+        reaching into this class's internals.
+        """
+        return [track_idx for track_idx, _, _ in self._windows]
+
 
 def collate_fn(
     batch: List[Tuple[torch.Tensor, int]]
