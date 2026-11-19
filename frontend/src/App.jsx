@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 
 export default function App() {
   const [file, setFile] = useState(null)
@@ -48,7 +48,7 @@ export default function App() {
         setResult(body)
       }
     } catch {
-      setError('Could not reach the backend. Is it running on port 8000?')
+      setError(`Could not reach the backend at ${API_BASE}. Is it running?`)
     } finally {
       setLoading(false)
     }

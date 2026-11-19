@@ -154,6 +154,14 @@ npm run dev
 
 Open http://localhost:5173, upload a clip, set the shruthi, optionally pick a target ragam, and submit. The frontend and the CLI (`scripts/demo.py`) call the same pipeline code (`src/pipeline.py`).
 
+The frontend calls `http://localhost:8000` by default. To point it at another backend, set `VITE_API_BASE` when building or running it (Vite reads it at build time):
+
+```bash
+VITE_API_BASE=https://api.example.com npm run build
+```
+
+The backend only accepts requests from `localhost:5173` (`allow_origins` in `backend/main.py`), so add the deployed frontend's origin there too.
+
 ## Status
 
 - [x] Project scaffold
