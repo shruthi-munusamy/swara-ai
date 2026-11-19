@@ -72,9 +72,9 @@ Tonic-relative cents conversion is the architectural primitive that makes the re
 
 | Model              | Val macro-F1 (10 tracks) | Test macro-F1 (12 tracks) | Params | Inference latency |
 |--------------------|--------------------------|---------------------------|--------|-------------------|
-| BiLSTM+attention   |                    0.867 |                     0.717 | 630154 |           12.02ms |
-| SVM (histograms)   |                    0.733 |                     0.567 |   8208 |            0.07ms |
-| MLP (aggregates)   |                    0.400 |                     0.190 |   1882 |            0.06ms |
+| BiLSTM+attention   |                    0.867 |                     0.717 | 630154 |            9.31ms |
+| SVM (histograms)   |                    0.733 |                     0.567 |   8208 |            0.06ms |
+| MLP (aggregates)   |                    0.400 |                     0.190 |   1882 |            0.18ms |
 
 The test set is 12 tracks, one or two per raga, so a single misclassified track can move macro-F1 by 0.1 or more. Validation scores are optimistic for the LSTM and SVM: the LSTM was early-stopped on validation and the SVM's C/gamma were grid-searched on it. Test is the unbiased comparison.
 
@@ -127,7 +127,7 @@ python scripts/download_saraga.py                 # ~14GB, resumable
 python scripts/prepare_identifier_data.py          # picks MVP-10, writes splits
 python scripts/train_identifier.py                 # trains, checkpoints models/identifier_best.pt
 python scripts/evaluate_identifier.py              # test metrics, confusion matrix
-python scripts/evaluate_baselines.py --lstm-test-macro-f1 0.717
+python scripts/evaluate_baselines.py               # SVM/MLP baselines vs LSTM
 python scripts/profile_latency.py
 ```
 

@@ -5,10 +5,12 @@ against the LSTM identifier.
 Prerequisites:
     python scripts/prepare_identifier_data.py
     python scripts/train_identifier.py
-    python scripts/evaluate_identifier.py   (for the LSTM's test macro-F1)
 
 Usage:
-    python scripts/evaluate_baselines.py --lstm-test-macro-f1 0.717
+    python scripts/evaluate_baselines.py
+
+All macro-F1 scores are track-level. The LSTM's are computed with the same
+code path as scripts/evaluate_identifier.py.
 
 Outputs:
     models/baseline_comparison.md
@@ -28,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.identifier.baselines import train_mlp_baseline, train_svm_baseline
 from src.identifier.dataset import NUM_SWARA_CLASSES, discover_tracks
+from src.identifier.evaluate import evaluate_predictions, predict_tracks
 from src.identifier.model import RagaLSTM
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.yaml"
@@ -40,12 +43,17 @@ def _load_config(path: Path) -> dict:
         return yaml.safe_load(f)
 
 
-def _lstm_row(config: dict, raga_to_label: dict, test_macro_f1_from_evaluate: float) -> dict:
+def _lstm_row(
+    config: dict,
+    raga_to_label: dict,
+    val_tracks: list,
+    test_tracks: list,
+    cache_dir: Path,
+    pipeline_kwargs: dict,
+) -> dict:
     """
-    Re-derive the LSTM's param count and single-window inference latency
-    for the comparison table. The test macro-F1 itself comes from
-    scripts/evaluate_identifier.py's output rather than being recomputed
-    here, so there's exactly one code path that produces that number.
+    Track-level val/test macro-F1, param count, and single-window inference
+    latency for the trained LSTM checkpoint.
     """
     id_cfg = config["identifier"]
     model = RagaLSTM(
@@ -57,9 +65,19 @@ def _lstm_row(config: dict, raga_to_label: dict, test_macro_f1_from_evaluate: fl
         dropout=id_cfg["dropout"],
     )
     checkpoint_path = Path(config["paths"]["models_dir"]) / "identifier_best.pt"
-    if checkpoint_path.exists():
-        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"))
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"{checkpoint_path} not found. Run scripts/train_identifier.py first.")
+    model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"))
     model.eval()
+
+    label_names = sorted(raga_to_label, key=raga_to_label.get)
+
+    def _macro_f1(tracks: list) -> float:
+        predictions = predict_tracks(
+            model, tracks, raga_to_label, cache_dir, pipeline_kwargs,
+            id_cfg["window_size_segments"], id_cfg["window_stride_segments"], torch.device("cpu"),
+        )
+        return evaluate_predictions(predictions, label_names).macro_f1
 
     num_params = sum(p.numel() for p in model.parameters())
 
@@ -74,8 +92,8 @@ def _lstm_row(config: dict, raga_to_label: dict, test_macro_f1_from_evaluate: fl
 
     return {
         "name": "BiLSTM+attention",
-        "val_macro_f1": None,  # not recomputed here; see models/identifier_best.pt training log
-        "test_macro_f1": test_macro_f1_from_evaluate,
+        "val_macro_f1": _macro_f1(val_tracks),
+        "test_macro_f1": _macro_f1(test_tracks),
         "num_params": num_params,
         "mean_inference_latency_ms": latency_ms,
     }
@@ -86,10 +104,6 @@ def main() -> int:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--saraga-root", type=Path, default=DEFAULT_SARAGA_ROOT)
     parser.add_argument("--processed-dir", type=Path, default=DEFAULT_PROCESSED_DIR)
-    parser.add_argument(
-        "--lstm-test-macro-f1", type=float, required=True,
-        help="Test macro-F1 printed by scripts/evaluate_identifier.py (not recomputed here).",
-    )
     args = parser.parse_args()
 
     config = _load_config(args.config)
@@ -135,26 +149,26 @@ def main() -> int:
     )
     print(f"  MLP: val_macro_f1={mlp_result.val_macro_f1:.3f}  test_macro_f1={mlp_result.test_macro_f1:.3f}")
 
-    lstm_row = _lstm_row(config, raga_to_label, args.lstm_test_macro_f1)
+    lstm_row = _lstm_row(config, raga_to_label, val_tracks, test_tracks, cache_dir, pipeline_kwargs)
+    print(f"  LSTM: val_macro_f1={lstm_row['val_macro_f1']:.3f}  test_macro_f1={lstm_row['test_macro_f1']:.3f}")
 
     rows = [
+        (lstm_row["name"], lstm_row["val_macro_f1"], lstm_row["test_macro_f1"], lstm_row["num_params"], lstm_row["mean_inference_latency_ms"]),
         (svm_result.name, svm_result.val_macro_f1, svm_result.test_macro_f1, svm_result.num_params, svm_result.mean_inference_latency_ms),
         (mlp_result.name, mlp_result.val_macro_f1, mlp_result.test_macro_f1, mlp_result.num_params, mlp_result.mean_inference_latency_ms),
-        (lstm_row["name"], None, lstm_row["test_macro_f1"], lstm_row["num_params"], lstm_row["mean_inference_latency_ms"]),
     ]
 
+    val_header = f"Val macro-F1 ({len(val_tracks)} tracks)"
+    test_header = f"Test macro-F1 ({len(test_tracks)} tracks)"
     lines = [
-        "| Model              | Val macro-F1 | Test macro-F1 | Params | Inference latency |",
-        "|--------------------|--------------|---------------|--------|--------------------|",
+        f"| Model              | {val_header} | {test_header} | Params | Inference latency |",
+        f"|--------------------|-{'-' * len(val_header)}-|-{'-' * len(test_header)}-|--------|-------------------|",
     ]
     for name, val_f1, test_f1, params, latency in rows:
-        val_str = f"{val_f1:.3f}" if val_f1 is not None else "n/a*"
-        lines.append(f"| {name:<18s} | {val_str:>12s} | {test_f1:>13.3f} | {params:>6d} | {latency:>14.2f}ms |")
-    lines.append("")
-    lines.append(
-        "*LSTM val macro-F1 (0.595, best epoch 13) comes from the training run "
-        "log, not recomputed by this script -- see README training section."
-    )
+        lines.append(
+            f"| {name:<18s} | {val_f1:>{len(val_header)}.3f} | {test_f1:>{len(test_header)}.3f} "
+            f"| {params:>6d} | {latency:>15.2f}ms |"
+        )
 
     table = "\n".join(lines)
     print("\n" + table)
