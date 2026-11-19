@@ -8,7 +8,7 @@ theory-driven pick; see --select-by) and writes reproducible splits.
 
 Usage:
     python scripts/prepare_identifier_data.py
-    python scripts/prepare_identifier_data.py --saraga-root data/raw/saraga --num-ragas 10
+    python scripts/prepare_identifier_data.py --saraga-root data/raw/saraga/saraga1.5_carnatic --num-ragas 10
 
 Outputs:
     data/processed/mvp_ragas.yaml  -- chosen ragas + their track counts
@@ -33,7 +33,7 @@ from src.identifier.dataset import (
     stratified_split,
 )
 
-DEFAULT_SARAGA_ROOT = Path("data/raw/saraga")
+DEFAULT_SARAGA_ROOT = Path("data/raw/saraga/saraga1.5_carnatic")
 DEFAULT_OUTPUT_DIR = Path("data/processed")
 DEFAULT_NUM_RAGAS = 10
 DEFAULT_SEED = 42

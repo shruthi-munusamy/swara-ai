@@ -34,7 +34,7 @@ from src.identifier.model import RagaLSTM
 from src.identifier.train import WandbLogger, set_seed, train
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.yaml"
-DEFAULT_SARAGA_ROOT = Path("data/raw/saraga")
+DEFAULT_SARAGA_ROOT = Path("data/raw/saraga/saraga1.5_carnatic")
 DEFAULT_PROCESSED_DIR = Path("data/processed")
 
 
