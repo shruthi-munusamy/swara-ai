@@ -62,7 +62,7 @@ Tonic-relative cents conversion is the architectural primitive that makes the re
 
 **Raga identifier.** Bidirectional LSTM + attention pooling over a 12-way swara-position vocabulary (shared cents positions like R2/G1 collapse to one class, since disambiguating them requires already knowing the raga). Trained on Saraga (CompMusic), on the 10 most-represented ragas by total audio duration. Each track is windowed into overlapping 48-segment chunks to get enough training examples from a corpus where even the most common raga has only 7 usable tracks; splits are made at the track level before windowing, so no window from one concert can leak across train/val/test.
 
-## Real results
+## Results
 
 **MVP-10 ragas** (selected by total audio duration, not track count — see [Dataset](#dataset)): Bhairavi, Tōḍi, Ṣanmukhapriya, Kāṁbhōji, Mōhanaṁ, Kamās, Bēgaḍa, Rītigauḷa, Kalyāṇi, Behāg. 42 usable tracks total (20 train / 10 val / 12 test), windowed into 1407 / 1034 training examples.
 
@@ -86,9 +86,9 @@ Two classes (Bēgaḍa, Rītigauḷa) scored 0 F1 from a single misclassificatio
 | MLP (aggregates)   |        0.400 |         0.190 |   1882 |              0.06ms |
 | BiLSTM+attention   |        0.595 |         0.717 | 630154 |             12.02ms |
 
-The LSTM clearly outperforms both baselines on the held-out test set — sequence modeling earns its added complexity on this task rather than being asserted without comparison.
+On the held-out test set the LSTM outperforms both baselines. The SVM leads on validation, so with only 12 test tracks the margin should be read with caution.
 
-**Allied-raga error analysis.** All three test-set confusion pairs (Kamās→Kāṁbhōji, Bēgaḍa→Kāṁbhōji, Rītigauḷa→Bēgaḍa) involve ragas that are *not* melakartas — they're janya (derived) ragas with no swara-set definition yet in `ragams/melakartas.yaml` (which only covers the 72 melakarta parent scales), so the shared-swara-position claim can't be formally verified for them. It's a real, honestly-reported limitation rather than a suppressed one: `src/identifier/evaluate.py`'s `allied_raga_overlap` only resolves pairs where both ragas are melakartas already in the registry, and reports "not verified" otherwise rather than guessing.
+**Allied-raga error analysis.** All three test-set confusion pairs (Kamās→Kāṁbhōji, Bēgaḍa→Kāṁbhōji, Rītigauḷa→Bēgaḍa) involve ragas that are *not* melakartas — they're janya (derived) ragas with no swara-set definition yet in `ragams/melakartas.yaml` (which only covers the 72 melakarta parent scales), so the shared-swara-position claim can't be formally verified for them. `allied_raga_overlap` in `src/identifier/evaluate.py` only resolves pairs where both ragas are melakartas in the registry and reports "not verified" otherwise.
 
 **Latency** (10 runs, 10.4s clip, CREPE `tiny`):
 
@@ -103,7 +103,7 @@ The LSTM clearly outperforms both baselines on the held-out test set — sequenc
 
 *p95 is inflated by TensorFlow/CREPE cold-start on the first couple of runs; CREPE dominates end-to-end latency as expected, everything downstream of pitch extraction is sub-10ms.
 
-**Out-of-distribution evaluation** has not been run yet — it requires non-Saraga vocal recordings that haven't been supplied. This is an explicit gap, not a hidden one.
+**Out-of-distribution evaluation** has not been run yet — it requires non-Saraga vocal recordings that haven't been supplied.
 
 ## Setup
 
@@ -152,7 +152,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173, upload a clip, set the shruthi, optionally pick a target ragam, and submit. The frontend and the CLI (`scripts/demo.py`) call the exact same pipeline code (`src/pipeline.py`) — they cannot silently diverge.
+Open http://localhost:5173, upload a clip, set the shruthi, optionally pick a target ragam, and submit. The frontend and the CLI (`scripts/demo.py`) call the same pipeline code (`src/pipeline.py`).
 
 ## Status
 

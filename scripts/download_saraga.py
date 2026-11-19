@@ -38,16 +38,13 @@ ZIP_FILENAME = "saraga1.5_carnatic.zip"
 DEFAULT_DEST = Path("data/raw/saraga")
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB
+MAX_RETRIES = 20
+RETRY_BACKOFF_SECONDS = 5
+REQUEST_TIMEOUT_SECONDS = 30
 
 
 class DownloadError(RuntimeError):
     """Raised when the Saraga download or extraction fails."""
-    pass
-
-
-MAX_RETRIES = 20
-RETRY_BACKOFF_SECONDS = 5
-REQUEST_TIMEOUT_SECONDS = 30
 
 
 def _download_with_resume(url: str, dest_path: Path, expected_size: int) -> None:
@@ -55,14 +52,9 @@ def _download_with_resume(url: str, dest_path: Path, expected_size: int) -> None
     Download `url` to `dest_path`, resuming from an existing partial file
     via HTTP Range if one is present and smaller than the expected size.
 
-    Zenodo's connection has proven flaky in practice (read timeouts and
-    dropped connections mid-transfer, observed well before the full 14GB
-    transferred). Rather than relying on the operator to notice a dead
-    process and re-invoke the script, retries happen inside this function:
-    a dropped connection re-opens a fresh Range request from the current
-    file offset, up to `MAX_RETRIES` times, with a fixed backoff. This is
-    the same resume mechanism used for a fully-restarted process, just
-    triggered automatically instead of requiring a re-run.
+    Zenodo drops connections mid-transfer in practice, so a dropped
+    connection re-opens a Range request from the current file offset, up to
+    `MAX_RETRIES` times with linear backoff.
     """
     if dest_path.exists() and dest_path.stat().st_size > expected_size:
         raise DownloadError(

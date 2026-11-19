@@ -22,7 +22,6 @@ from typing import Union
 import librosa
 import numpy as np
 
-# Pinned defaults. Override per-call only if you have a specific reason.
 DEFAULT_SAMPLE_RATE: int = 16000
 SUPPORTED_EXTENSIONS = frozenset({".wav", ".mp3", ".flac", ".ogg", ".m4a"})
 

@@ -47,7 +47,7 @@ export default function App() {
       } else {
         setResult(body)
       }
-    } catch (err) {
+    } catch {
       setError('Could not reach the backend. Is it running on port 8000?')
     } finally {
       setLoading(false)

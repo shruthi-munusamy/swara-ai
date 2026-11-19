@@ -10,7 +10,7 @@ the numbers here are the ones that go in the README.
 
 Allied-raga analysis only resolves for ragas that are themselves melakartas
 in the existing registry (most MVP-10 ragas are janya/derived ragas not yet
-represented there -- see design log). Unresolvable pairs are reported as
+represented there). Unresolvable pairs are reported as
 such rather than guessed.
 """
 

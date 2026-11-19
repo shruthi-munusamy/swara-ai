@@ -216,11 +216,8 @@ class TestRagaDurations:
         top = build_mvp_raga_list(tracks, top_k=1, by="duration")
         assert top == ["Common Raga"]
 
-    def test_selection_by_duration_beats_selection_by_count(self):
-        # Both ragas have the same track count (3, clearing the minimum),
-        # but Todi's tracks are much shorter in total. Duration-based
-        # selection should prefer Kalyani; count-based should tie and fall
-        # back to whichever Counter.most_common happens to list first.
+    def test_duration_selection_prefers_longer_total_audio(self):
+        # Equal track counts (3 each); Kalyani has far more total audio.
         tracks = [
             TrackInfo("t1", Path("a"), 220.0, "Todi", 10.0),
             TrackInfo("t2", Path("b"), 220.0, "Todi", 10.0),
@@ -348,7 +345,6 @@ class TestWindowBounds:
         bounds = _window_bounds(seq_len=100, window_size=48, stride=24)
         assert bounds[0] == (0, 48)
         assert bounds[1] == (24, 72)
-        # every window is exactly window_size long
         assert all(end - start == 48 for start, end in bounds)
 
     def test_tail_is_covered_even_off_stride(self):

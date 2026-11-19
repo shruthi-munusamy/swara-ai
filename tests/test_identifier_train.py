@@ -236,12 +236,8 @@ class TestTrainLoop:
         assert len(history.train_loss) < 200
 
     def test_same_seed_gives_identical_loss_curve(self, tmp_path):
-        # `train()` seeds torch/numpy/random for everything that happens
-        # from its own call onward (data order, dropout), but model
-        # *construction* happens before train() is even called -- so
-        # reproducing a full run (including initial weights) requires
-        # seeding before building the model too, same as any real training
-        # script would (seed once at the top, then build + train).
+        # train() seeds from its own call onward, but model init happens
+        # before it, so seed before construction too.
         sequences, labels = _make_toy_data()
         loader = _make_loader(sequences, labels)
 

@@ -2,7 +2,7 @@
 Visualize CREPE pitch extraction on a real audio file.
 
 Usage:
-    python scripts/sanity_check_pitch.py path/to/recording.wav
+    python scripts/visualize_pitch.py path/to/recording.wav
 
 Prints summary statistics, then saves a PNG plot of pitch and confidence
 versus time. Use this to sanity-check the extractor on any new audio before
@@ -42,7 +42,6 @@ def main(audio_path: Path, model: str, threshold: float, output_path: Path) -> N
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 5), sharex=True)
 
-    # Pitch plot, colored by confidence.
     sc = ax1.scatter(
         contour.times,
         contour.frequencies_hz,
@@ -57,7 +56,6 @@ def main(audio_path: Path, model: str, threshold: float, output_path: Path) -> N
     ax1.set_title(f"CREPE pitch contour — {audio_path.name} (model={model})")
     plt.colorbar(sc, ax=ax1, label="confidence")
 
-    # Confidence plot.
     ax2.plot(contour.times, contour.confidence, linewidth=0.8)
     ax2.axhline(threshold, color="red", linestyle="--", linewidth=0.8, label=f"threshold={threshold}")
     ax2.set_xlabel("Time (s)")

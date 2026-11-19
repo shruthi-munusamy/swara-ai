@@ -20,6 +20,9 @@ env/
 
 # Local-only
 .local/
+.claude/
+CLAUDE.md
+CLAUDE.local.md
 
 # Project
 data/raw/

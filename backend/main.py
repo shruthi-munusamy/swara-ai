@@ -73,11 +73,9 @@ def list_ragams() -> List[str]:
 @app.get("/identifier-ragas")
 def list_identifier_ragas() -> List[str]:
     """
-    The identifier's actual trained vocabulary (MVP-10) -- a strict subset
-    of /ragams, and mostly non-overlapping (most are janya ragas not in
-    the melakarta registry at all). The frontend uses this to disclose the
-    identifier's real scope rather than letting a user assume it covers
-    everything /ragams lists.
+    The identifier's trained raga vocabulary (MVP-10 Saraga labels, mostly
+    janya ragas). Largely disjoint from /ragams; the frontend uses this to
+    disclose the identifier's real scope.
     """
     processed_dir = Path(_config["paths"]["data_dir"]) / "processed"
     with open(processed_dir / "mvp_ragas.yaml", "r", encoding="utf-8") as f:

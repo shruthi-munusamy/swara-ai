@@ -6,7 +6,6 @@ import pytest
 from src.pitch.cents import CentsContour
 from src.swara.segmenter import (
     SegmentationError,
-    SwaraSegment,
     segment_swaras,
 )
 

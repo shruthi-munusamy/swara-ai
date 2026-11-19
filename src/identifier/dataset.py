@@ -5,7 +5,7 @@ Each example is a track: raw audio -> shared pipeline (CREPE pitch ->
 tonic-relative cents -> swara segmentation) -> a sequence of swara-class
 indices, paired with the track's raga label.
 
-Feature representation (locked decision, see design log):
+Feature representation:
     Segmented swara sequence, not raw frame-rate cents. This is the same
     representation the adherence checker consumes -- one pipeline, two
     heads -- and it's what a Carnatic listener actually attends to (which
@@ -25,10 +25,10 @@ confidence-handling policy instead of two.
 
 Variable-length sequences: tracks differ wildly in duration and swara count.
 Handled by padding + explicit lengths in `collate_fn`, consumed by
-`pack_padded_sequence` in the model (C12) -- not truncation, which would
+`pack_padded_sequence` in the model -- not truncation, which would
 throw away signal from longer performances.
 
-Windowing (added after running against real data, not in the original plan):
+Windowing:
     Saraga has as few as 3-7 usable tracks for even the most-represented
     ragas. One example per track leaves too little signal for an honest
     train/val/test split -- a handful of tracks per class means a test set
@@ -58,7 +58,7 @@ from torch.utils.data import Dataset
 from src.audio.loader import load_audio
 from src.pitch.cents import to_cents_contour
 from src.pitch.extractor import extract_pitch
-from src.swara.definitions import SWARASTHANA_CENTS
+from src.swara.definitions import SWARASTHANA_CENTS, swara_to_cents
 from src.swara.segmenter import segment_swaras
 
 # Minimum tracks a raga needs to place at least one in each of
@@ -106,8 +106,6 @@ def segment_to_class_index(swara_candidates: Sequence[str]) -> int:
     construction (that's why the segmenter grouped them), so any one of
     them resolves to the same index.
     """
-    from src.swara.definitions import swara_to_cents  # local import: avoid cycle at module load
-
     if not swara_candidates:
         raise DatasetError("swara_candidates is empty; cannot resolve a class index")
     return cents_to_class_index(swara_to_cents(swara_candidates[0]))
@@ -159,8 +157,7 @@ def _read_duration_seconds(audio_path: Path) -> float:
 # *form*, not a single raga (a Rāgamālika performance traverses several
 # ragas within one piece, with no sub-raga breakdown recorded). Treated the
 # same as a missing raga label: there's no single coherent swara set for
-# the identifier to learn from a track labeled this way. Confirmed with
-# Shruthi rather than silently including or excluding it.
+# the identifier to learn from a track labeled this way.
 NON_RAGA_LABELS: frozenset = frozenset({"Rāgamālika"})
 
 
@@ -373,8 +370,8 @@ def load_or_compute_sequence(
 
 def build_mvp_raga_list(tracks: Sequence[TrackInfo], top_k: int, by: str = "duration") -> List[str]:
     """
-    Select the `top_k` most-represented ragas. Data-driven, not a
-    theory-based pick -- see design log for why.
+    Select the `top_k` most-represented ragas. Data-driven (ranked by
+    available audio), not a theory-based pick.
 
     `by="duration"` (default) ranks by total audio duration -- see
     `raga_durations` for why this beats track count as the selection metric

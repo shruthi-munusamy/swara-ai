@@ -58,7 +58,6 @@ class TestIdentifyRaga:
             predictions = identify_raga(SAMPLE_CLIP, 220.0, config, top_k=3)
         except PipelineError:
             pytest.skip("identifier checkpoint/mvp_ragas.yaml not present in this environment")
-            return
         assert len(predictions) <= 3
         for p in predictions:
             assert isinstance(p, RagaPrediction)
@@ -69,6 +68,5 @@ class TestIdentifyRaga:
             predictions = identify_raga(SAMPLE_CLIP, 220.0, config, top_k=3)
         except PipelineError:
             pytest.skip("identifier checkpoint/mvp_ragas.yaml not present in this environment")
-            return
         confidences = [p.confidence for p in predictions]
         assert confidences == sorted(confidences, reverse=True)

@@ -8,7 +8,6 @@ import soundfile as sf
 
 from src.audio.loader import (
     DEFAULT_SAMPLE_RATE,
-    MIN_DURATION_SECONDS,
     AudioClip,
     AudioLoadError,
     load_audio,

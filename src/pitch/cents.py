@@ -126,18 +126,7 @@ def _hz_to_cents_unchecked(freq_hz: np.ndarray, shruthi_hz: float) -> np.ndarray
 
 
 def fold_to_octave(cents: np.ndarray) -> np.ndarray:
-    """
-    Reduce cents values to the half-open interval [0, 1200).
-
-    NaN values pass through unchanged.
-
-    Args:
-        cents: shape (N,) array of cents values, possibly negative or > 1200.
-
-    Returns:
-        shape (N,) array with each value mapped to its equivalent
-        position within a single octave [0, 1200).
-    """
+    """Fold cents into [0, 1200); NaN passes through."""
     cents = np.asarray(cents, dtype=np.float64)
     return np.where(np.isnan(cents), cents, np.mod(cents, 1200.0))
 

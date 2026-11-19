@@ -11,9 +11,9 @@ scipy>=1.11.0
 # Config
 pyyaml>=6.0
 
-# ML (identifier head, phase 4)
+# ML (identifier head)
 torch>=2.1.0
-scikit-learn>=1.3.0    # macro-F1 metrics, and the SVM/MLP baselines (phase 4)
+scikit-learn>=1.3.0    # macro-F1 metrics, and the SVM/MLP baselines
 
 # Visualization
 matplotlib>=3.7.0
@@ -22,7 +22,7 @@ matplotlib>=3.7.0
 tqdm>=4.66.0
 requests>=2.31.0
 
-# Experiment tracking (phase 4)
+# Experiment tracking
 wandb>=0.16.0
 
 # Web backend (demo)

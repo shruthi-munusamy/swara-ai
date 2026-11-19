@@ -19,14 +19,12 @@ import yaml
 
 from src.swara.definitions import (
     VALID_SWARA_TOKENS,
-    swara_to_cents,
     swaras_to_cents,
 )
 
-# Default location of the ragam YAML, relative to project root.
+# Default location of the ragam YAML, relative to the working directory.
 DEFAULT_RAGAMS_PATH = Path("ragams") / "melakartas.yaml"
 
-# Expected total number of melakarta ragams.
 EXPECTED_MELAKARTA_COUNT = 72
 
 # Sampurna melakartas have exactly 8 swaras in arohanam (7 unique + upper S).
@@ -141,7 +139,6 @@ def _validate_ragam_entry(entry: dict, idx: int) -> None:
             f"missing required fields: {sorted(missing)}"
         )
 
-    # All swara tokens must be recognized swarasthanas.
     for field_name in ("arohanam", "avarohanam", "swaras"):
         for token in entry[field_name]:
             if token not in VALID_SWARA_TOKENS:

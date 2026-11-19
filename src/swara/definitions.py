@@ -7,8 +7,8 @@ swarasthana relative to Sa (S = 0 cents). All downstream pipeline components
 
 Notes on the 12-TET choice:
     Carnatic theory traditionally uses just-intonation ratios (e.g. G3 at
-    ratio 5/4 = ~386 cents rather than 400). For the MVP we use 12-TET as
-    the baseline because:
+    ratio 5/4 = ~386 cents rather than 400). We use 12-TET as the baseline
+    because:
       1. The downstream cents tolerance (config.yaml `swara.tolerance_cents`,
          default 35) is wider than the max 12-TET-vs-JI gap (~14c at G3/N2),
          so the choice is absorbed by tolerance.
@@ -86,33 +86,5 @@ def swara_to_cents(swara: str) -> float:
 
 
 def swaras_to_cents(swaras: List[str]) -> List[float]:
-    """
-    Convert a sequence of swara symbols to cents values.
-
-    Used by the ragam loader to translate `arohanam` / `avarohanam` /
-    `swaras` lists from YAML into numeric pitch sets the segmenter can
-    match pitch frames against.
-
-    Args:
-        swaras: List of swara symbols.
-
-    Returns:
-        List of cents values in the same order as `swaras`.
-    """
+    """Vectorised `swara_to_cents`; used by the ragam loader."""
     return [swara_to_cents(s) for s in swaras]
-
-
-def cents_mod_octave(cents: float) -> float:
-    """
-    Reduce a cents value to its position within a single octave [0, 1200).
-
-    The segmenter operates on octave-folded cents so that the same swara
-    sung at different octaves matches the same ragam definition entry.
-
-    Args:
-        cents: Cents value (can be negative or >= 1200).
-
-    Returns:
-        Cents value in the half-open interval [0, 1200).
-    """
-    return cents % 1200.0

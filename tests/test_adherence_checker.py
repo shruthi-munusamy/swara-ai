@@ -4,7 +4,6 @@ import pytest
 
 from src.adherence.checker import (
     AdherenceReport,
-    AdherenceSegment,
     check_adherence,
 )
 from src.swara.definitions import swara_to_cents
@@ -64,12 +63,10 @@ class TestClassification:
         assert report.per_segment[0].matched_swara == "R2"
 
     def test_g1_not_in_sankarabharanam(self, sankarabharanam):
-        """G1 (200c) shares position with R2 but isn't named in Sankarabharanam.
-        The checker should still classify this as in-raga via R2."""
+        """A segment whose only candidate is G1 is out of raga, even though G1
+        shares 200c with R2."""
         seg = _make_segment(("G1",), cents=swara_to_cents("G1"))
         report = check_adherence([seg], sankarabharanam)
-        # Segment had only G1 as a candidate; G1 is not in Sankarabharanam's
-        # swara set. So it's out of raga.
         assert not report.per_segment[0].in_raga
 
     def test_m2_not_in_sankarabharanam(self, sankarabharanam):

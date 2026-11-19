@@ -136,10 +136,10 @@ def train_svm_baseline(
     X_train, y_train, _ = _build_windowed_matrix(
         train_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride, histogram_features
     )
-    X_val, y_val, val_idx = _build_windowed_matrix(
+    X_val, _, val_idx = _build_windowed_matrix(
         val_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride, histogram_features
     )
-    X_test, y_test, test_idx = _build_windowed_matrix(
+    X_test, _, test_idx = _build_windowed_matrix(
         test_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride, histogram_features
     )
 
@@ -179,10 +179,10 @@ def train_mlp_baseline(
     X_train, y_train, _ = _build_windowed_matrix(
         train_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride, aggregate_features
     )
-    X_val, y_val, val_idx = _build_windowed_matrix(
+    X_val, _, val_idx = _build_windowed_matrix(
         val_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride, aggregate_features
     )
-    X_test, y_test, test_idx = _build_windowed_matrix(
+    X_test, _, test_idx = _build_windowed_matrix(
         test_tracks, raga_to_label, cache_dir, pipeline_kwargs, window_size, window_stride, aggregate_features
     )
 

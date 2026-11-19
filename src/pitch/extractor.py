@@ -16,9 +16,8 @@ Model size tradeoffs (config.yaml `pitch.crepe_model`):
     medium  ~ 21 MB
     large   ~ 85 MB
     full    ~ 137 MB, slowest, best accuracy
-For development we default to `tiny` (already loaded as part of crepe package
-import; no network call needed). For final evaluation runs the identifier
-will use `full` for reference-quality pitch.
+Defaults to `tiny` (see config.yaml; bundled with the crepe package, no
+network call needed). Larger capacities trade latency for accuracy.
 """
 
 from __future__ import annotations
@@ -34,7 +33,6 @@ from src.audio.loader import AudioClip
 # CREPE was trained at this rate; it's not configurable without retraining.
 CREPE_SAMPLE_RATE: int = 16000
 
-# Available CREPE model capacities.
 CrepeModel = Literal["tiny", "small", "medium", "large", "full"]
 
 # Default analysis hop in milliseconds. CREPE accepts step_size in ms; 10 ms is

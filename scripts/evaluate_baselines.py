@@ -8,7 +8,7 @@ Prerequisites:
     python scripts/evaluate_identifier.py   (for the LSTM's test macro-F1)
 
 Usage:
-    python scripts/evaluate_baselines.py
+    python scripts/evaluate_baselines.py --lstm-test-macro-f1 0.717
 
 Outputs:
     models/baseline_comparison.md

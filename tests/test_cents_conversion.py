@@ -67,7 +67,7 @@ class TestHzToCents:
 
 # ----- Shruthi invariance: the key property -----
 
-class TestShrutiInvariance:
+class TestShruthiInvariance:
     """
     The whole point of this module: two singers at different tonics singing
     the same raga should produce the same folded cents values.
