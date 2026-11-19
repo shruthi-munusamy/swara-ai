@@ -140,6 +140,11 @@ class TestAlliedRagaOverlap:
         assert "shared" in result
         assert "not verified" not in result
 
+    def test_resolves_saraga_labels_with_diacritics(self):
+        # Saraga's MVP-10 labels are IAST-romanized; the registry is ASCII.
+        assert allied_raga_overlap("Kalyāṇi", "Tōḍi") == allied_raga_overlap("Kalyani", "Todi")
+        assert "not verified" not in allied_raga_overlap("Ṣanmukhapriya", "Kalyāṇi")
+
     def test_unresolvable_janya_raga_reports_not_verified(self):
         result = allied_raga_overlap("Bhairavi", "Kalyani")
         assert "not verified" in result

@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Optional
 
+import unicodedata
+
 import yaml
 
 from src.swara.definitions import (
@@ -29,6 +31,16 @@ EXPECTED_MELAKARTA_COUNT = 72
 
 # Sampurna melakartas have exactly 8 swaras in arohanam (7 unique + upper S).
 EXPECTED_AROHANAM_LENGTH = 8
+
+# IAST sibilants are romanized as "sh" in the registry (Ṣanmukhapriya ->
+# Shanmukhapriya), so map them before stripping the remaining diacritics.
+_SIBILANTS = str.maketrans({"ṣ": "sh", "ś": "sh"})
+
+
+def normalize_raga_name(name: str) -> str:
+    """Lowercase ASCII key for a raga name: Saraga's "Kalyāṇi" -> "kalyani"."""
+    decomposed = unicodedata.normalize("NFKD", name.lower().translate(_SIBILANTS))
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
 
 
 @dataclass(frozen=True)
@@ -99,11 +111,11 @@ class RagamRegistry:
 
     def __init__(self, ragams: List[Ragam]) -> None:
         self._by_number: Dict[int, Ragam] = {r.number: r for r in ragams}
-        self._by_name: Dict[str, Ragam] = {r.name.lower(): r for r in ragams}
+        self._by_name: Dict[str, Ragam] = {normalize_raga_name(r.name): r for r in ragams}
         # Also index by formal melakarta_name where it differs from common name.
         for r in ragams:
-            if r.melakarta_name and r.melakarta_name.lower() not in self._by_name:
-                self._by_name[r.melakarta_name.lower()] = r
+            if r.melakarta_name and normalize_raga_name(r.melakarta_name) not in self._by_name:
+                self._by_name[normalize_raga_name(r.melakarta_name)] = r
 
     def get_by_number(self, number: int) -> Ragam:
         """Look up a ragam by its melakarta number (1-72)."""
@@ -112,8 +124,11 @@ class RagamRegistry:
         return self._by_number[number]
 
     def get_by_name(self, name: str) -> Ragam:
-        """Case-insensitive lookup by common name or formal melakarta name."""
-        key = name.lower()
+        """
+        Lookup by common name or formal melakarta name, ignoring case and
+        diacritics (Saraga labels use IAST: "Tōḍi" finds "Todi").
+        """
+        key = normalize_raga_name(name)
         if key not in self._by_name:
             raise KeyError(f"No ragam with name {name!r}")
         return self._by_name[key]

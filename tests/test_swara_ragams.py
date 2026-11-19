@@ -49,6 +49,13 @@ class TestLookup:
         kalyani = registry.get_by_name("Mechakalyani")
         assert kalyani.number == 65
 
+    @pytest.mark.parametrize(
+        "saraga_label, number",
+        [("Kalyāṇi", 65), ("Tōḍi", 8), ("Ṣanmukhapriya", 56)],
+    )
+    def test_lookup_ignores_saraga_diacritics(self, registry, saraga_label, number):
+        assert registry.get_by_name(saraga_label).number == number
+
     def test_invalid_number_raises(self, registry):
         with pytest.raises(KeyError):
             registry.get_by_number(100)
