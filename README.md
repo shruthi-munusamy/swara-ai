@@ -66,27 +66,19 @@ Tonic-relative cents conversion is the architectural primitive that makes the re
 
 **MVP-10 ragas** (selected by total audio duration, not track count — see [Dataset](#dataset)): Bhairavi, Tōḍi, Ṣanmukhapriya, Kāṁbhōji, Mōhanaṁ, Kamās, Bēgaḍa, Rītigauḷa, Kalyāṇi, Behāg. 42 usable tracks total (20 train / 10 val / 12 test), windowed into 1407 / 1034 training examples.
 
-**Training.** AdamW + cosine annealing, class-weighted cross-entropy, early stopping on validation macro-F1 (patience 7). Training converged with the expected overfitting signature for this data scale: train loss fell steadily toward 0 while val loss climbed from epoch ~7 onward. Best **val macro-F1 = 0.595** at epoch 13; stopped at epoch 20.
+**Training.** AdamW + cosine annealing, class-weighted cross-entropy, early stopping on validation macro-F1 (patience 7). Training converged with the expected overfitting signature for this data scale: train loss fell steadily toward 0 while val loss climbed from epoch ~7 onward. Best per-window val macro-F1 (the early-stopping metric) was 0.595 at epoch 13; stopped at epoch 20. The numbers below are all track-level.
 
-**Test set (12 held-out tracks, never seen in training):**
+**Model comparison** (track-level macro-F1; same train/val/test splits for every model; neither baseline sees swara order):
 
-| Metric | Value |
-|---|---|
-| Accuracy | 0.750 |
-| Macro-F1 | **0.717** |
-| Weighted-F1 | 0.736 |
+| Model              | Val macro-F1 (10 tracks) | Test macro-F1 (12 tracks) | Params | Inference latency |
+|--------------------|--------------------------|---------------------------|--------|-------------------|
+| BiLSTM+attention   |                    0.867 |                     0.717 | 630154 |           12.02ms |
+| SVM (histograms)   |                    0.733 |                     0.567 |   8208 |            0.07ms |
+| MLP (aggregates)   |                    0.400 |                     0.190 |   1882 |            0.06ms |
 
-Two classes (Bēgaḍa, Rītigauḷa) scored 0 F1 from a single misclassification each — an artifact of how few test tracks exist per class at this corpus size (1 track each), not a modeling failure. Full per-raga breakdown, confusion matrix, and per-track predictions: [`models/confusion_matrix.csv`](models/confusion_matrix.csv), [`models/confusion_matrix.png`](models/confusion_matrix.png), [`models/test_predictions.csv`](models/test_predictions.csv).
+The test set is 12 tracks, one or two per raga, so a single misclassified track can move macro-F1 by 0.1 or more. Validation scores are optimistic for the LSTM and SVM: the LSTM was early-stopped on validation and the SVM's C/gamma were grid-searched on it. Test is the unbiased comparison.
 
-**Baseline comparison** (same windowed train/val/test splits as the LSTM; neither baseline sees swara order):
-
-| Model              | Val macro-F1 | Test macro-F1 | Params | Inference latency |
-|--------------------|--------------|---------------|--------|--------------------|
-| SVM (histograms)   |        0.733 |         0.567 |   8208 |              0.07ms |
-| MLP (aggregates)   |        0.400 |         0.190 |   1882 |              0.06ms |
-| BiLSTM+attention   |        0.595 |         0.717 | 630154 |             12.02ms |
-
-On the held-out test set the LSTM outperforms both baselines. The SVM leads on validation, so with only 12 test tracks the margin should be read with caution.
+**LSTM test set detail:** accuracy 0.750, macro-F1 0.717, weighted-F1 0.736. Bēgaḍa and Rītigauḷa each have one test track; both were misclassified, so each scores 0 F1. Full per-raga breakdown, confusion matrix, and per-track predictions: [`models/confusion_matrix.csv`](models/confusion_matrix.csv), [`models/confusion_matrix.png`](models/confusion_matrix.png), [`models/test_predictions.csv`](models/test_predictions.csv).
 
 **Allied-raga error analysis.** All three test-set confusion pairs (Kamās→Kāṁbhōji, Bēgaḍa→Kāṁbhōji, Rītigauḷa→Bēgaḍa) involve ragas that are *not* melakartas — they're janya (derived) ragas with no swara-set definition yet in `ragams/melakartas.yaml` (which only covers the 72 melakarta parent scales), so the shared-swara-position claim can't be formally verified for them. `allied_raga_overlap` in `src/identifier/evaluate.py` only resolves pairs where both ragas are melakartas in the registry and reports "not verified" otherwise.
 
