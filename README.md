@@ -1,21 +1,28 @@
 # Swara AI
 
-A Carnatic vocal analysis system that performs raga adherence checking and raga identification on monophonic vocal recordings, with tonic-invariant feature extraction as the core architectural primitive.
+A Carnatic vocal analysis system that checks whether a singer stays within a raga and identifies the raga from a recording alone. Every recording is converted to pitch relative to the singer's tonic (shruthi) before any analysis, so results do not depend on which key the singer chose.
 
-## Problem
+## Why this project
 
-Standard music classification approaches break on Carnatic vocal audio because the same raga sung at two different shruthis (tonics) produces entirely different absolute pitch content. Spectrogram-based models trained naively will learn the singer's tonic rather than the raga's structure. Swara AI handles this by symbolically normalizing all pitch content to a singer-specified tonic before any learning or rule evaluation happens.
+Standard music classifiers break on Carnatic vocal audio because the same raga sung at two different shruthis produces entirely different absolute pitches. A model trained on raw spectrograms learns the singer's tonic instead of the raga's structure. Swara AI avoids this by converting all pitch to cents relative to the singer's shruthi before any rule or model sees it.
 
-## System
+## Results
 
-Two analysis modes share a single swara-extraction pipeline:
+Raga identification on 10 ragas from the Saraga dataset (track-level macro-F1, same splits for every model):
 
-- **Adherence checker** (rule-based) — given a target ragam, scores per-region adherence of the sung pitch to the ragam's allowed swara set within a configurable cents tolerance. Surfaces specific time regions where the singer deviates from the ragam.
-- **Raga identifier** (learned) — given audio alone, a BiLSTM+attention classifier trained on Saraga predicts the most likely raga from the extracted swara sequence.
+| Model | Val macro-F1 (10 tracks) | Test macro-F1 (12 tracks) | Params | Inference latency |
+|---|---|---|---|---|
+| BiLSTM + attention | 0.867 | **0.717** | 630,154 | 9.31 ms |
+| SVM (swara histograms) | 0.733 | 0.567 | 8,208 | 0.06 ms |
+| MLP (window aggregates) | 0.400 | 0.190 | 1,882 | 0.18 ms |
 
-The split is deliberate: ragam swara sets are canonical, so a learned adherence head would overfit to dataset artifacts rather than the underlying theory. Raga identification, in contrast, is a real sequence-classification problem that benefits from a learned model.
+Neither baseline sees the order of swaras; the BiLSTM does. The MLP scores 0.190, about twice chance (0.10 for 10 ragas).
 
-## Architecture
+The test set is small: 12 tracks, one or two per raga, so a single misclassified track can move macro-F1 by 0.1 or more. Both validation scores run high because the LSTM was early-stopped on validation and the SVM's C and gamma were grid-searched on it, so test is the fair comparison.
+
+**LSTM test detail:** accuracy 0.750, macro-F1 0.717, weighted-F1 0.736. Bēgaḍa and Rītigauḷa each have one test track, and both were misclassified, so each scores 0 F1. The full breakdown is in [`models/confusion_matrix.csv`](models/confusion_matrix.csv), [`models/confusion_matrix.png`](models/confusion_matrix.png), and [`models/test_predictions.csv`](models/test_predictions.csv).
+
+## How it works
 
 ```
         ┌────────────┐    ┌────────────┐
@@ -48,54 +55,42 @@ The split is deliberate: ragam swara sets are canonical, so a learned adherence 
         └───────────┘      └──────────────┘
 ```
 
-Tonic-relative cents conversion is the architectural primitive that makes the rest of the system shruthi-invariant. Without it, the same raga at two different tonics is two different problems.
+- **Pitch extraction.** CREPE (Kim et al., ICASSP 2018), a CNN pitch tracker for monophonic audio. It runs on Saraga's isolated vocal stem when one exists and falls back to the full mix otherwise, since violin and percussion make pitch estimates noisier.
+- **Tonic-relative cents.** `cents = 1200 * log2(f / shruthi_hz)`. Every later stage works in cents, not Hz.
+- **Swara segmentation.** A median filter on the pitch contour, a voicing mask from CREPE's confidence, and quantization to the nearest swarasthana within `tolerance_cents`. This step is rule-based signal processing, not learned.
+- **Adherence checker (rules).** Given a target raga, checks each segment's swara against the raga's allowed set and reports an adherence score with timestamps for every out-of-raga region.
+- **Raga identifier (learned).** A bidirectional LSTM with attention pooling over a 12-position swara vocabulary. Positions that share a pitch, such as R2 and G1, are merged, because telling them apart requires already knowing the raga.
 
-## Components
+The split between rules and learning is deliberate. A raga's allowed swaras are defined by theory, so a learned adherence model would only pick up quirks of the dataset. Identifying a raga from audio alone is a real sequence-classification problem, so that part is learned.
 
-**Pitch extraction.** CREPE (Kim et al., ICASSP 2018) — deep CNN trained on synthesized + real audio, state-of-the-art for monophonic pitch tracking.
+## What went wrong and how I fixed it
 
-**Tonic-relative cents.** `cents = 1200 * log2(f / shruthi_hz)`. All downstream components consume cents, not Hz.
+**Comparing two different metrics.** My first results table showed the LSTM at 0.595 validation macro-F1, below the SVM's 0.733. The LSTM's number was measured per window during training, while every other number in the table was per track. Re-measuring the same checkpoint per track gave 0.867, so the LSTM leads on both validation and test. The per-window score is still the early-stopping metric (best 0.595 at epoch 13), but the table now compares like with like.
 
-**Swara segmentation.** Median filter on the pitch contour, voicing mask from CREPE confidence, quantization to the nearest swarasthana within `tolerance_cents`. Outputs a swara sequence with per-segment confidence and duration. Rule-based signal processing, not learned.
+**Too little data for a sequence model.** Saraga has 249 tracks, but only 161 have a usable raga label, tonic, and resolvable audio. Even the most common raga in my 10-raga set has only 7 usable tracks. To get enough training examples, I split each track into overlapping 48-segment windows. Splitting by window would have leaked parts of the same concert into both training and test, so I assign whole tracks to train, validation, or test before windowing. The LSTM trains on 1,407 windows with AdamW, cosine annealing, and class-weighted cross-entropy, early-stopping with patience 7; it stopped at epoch 20. Training still shows clear overfitting at this scale: training loss falls toward 0 while validation loss rises from about epoch 7.
 
-**Adherence checker.** Rule-based: for each segmented region, check membership of the swara in the target ragam's allowed swara set. Output includes adherence score, list of out-of-ragam regions with timestamps, and confidence weighting.
+**Training steps that failed as written.** `prepare_identifier_data.py` and `train_identifier.py` defaulted `--saraga-root` to `data/raw/saraga`, while the evaluation scripts and the committed `splits.yaml` expected `data/raw/saraga/saraga1.5_carnatic`. Track IDs are paths relative to that root, so on a fresh clone no split track resolved. All four scripts now share one default, and rerunning `prepare_identifier_data.py` reproduces the committed splits exactly.
 
-**Raga identifier.** Bidirectional LSTM + attention pooling over a 12-way swara-position vocabulary (shared cents positions like R2/G1 collapse to one class, since disambiguating them requires already knowing the raga). Trained on Saraga (CompMusic), on the 10 most-represented ragas by total audio duration. Each track is windowed into overlapping 48-segment chunks to get enough training examples from a corpus where even the most common raga has only 7 usable tracks; splits are made at the track level before windowing, so no window from one concert can leak across train/val/test.
+**Raga names that would not match.** Saraga writes raga names with diacritics ("Ṣanmukhapriya"), while my melakarta registry uses plain spellings ("Shanmukhapriya"), so lookups silently failed. Lookups now ignore diacritics and map ṣ and ś to "sh", which resolves Tōḍi, Ṣanmukhapriya, and Kalyāṇi. Four tests cover the fix.
 
-## Results
+## Error analysis
 
-**MVP-10 ragas** (selected by total audio duration, not track count — see [Dataset](#dataset)): Bhairavi, Tōḍi, Ṣanmukhapriya, Kāṁbhōji, Mōhanaṁ, Kamās, Bēgaḍa, Rītigauḷa, Kalyāṇi, Behāg. 42 usable tracks total (20 train / 10 val / 12 test), windowed into 1407 / 1034 training examples.
+All three test-set confusions (Kamās → Kāṁbhōji, Bēgaḍa → Kāṁbhōji, Rītigauḷa → Bēgaḍa) involve janya (derived) ragas. My registry in `ragams/melakartas.yaml` covers only the 72 melakarta parent scales, so these pairs' shared swaras cannot be formally verified yet. `allied_raga_overlap` in `src/identifier/evaluate.py` reports "not verified" for any pair outside the registry instead of guessing.
 
-**Training.** AdamW + cosine annealing, class-weighted cross-entropy, early stopping on validation macro-F1 (patience 7). Training converged with the expected overfitting signature for this data scale: train loss fell steadily toward 0 while val loss climbed from epoch ~7 onward. Best per-window val macro-F1 (the early-stopping metric) was 0.595 at epoch 13; stopped at epoch 20. The numbers below are all track-level.
+## Pipeline latency
 
-**Model comparison** (track-level macro-F1; same train/val/test splits for every model; neither baseline sees swara order):
-
-| Model              | Val macro-F1 (10 tracks) | Test macro-F1 (12 tracks) | Params | Inference latency |
-|--------------------|--------------------------|---------------------------|--------|-------------------|
-| BiLSTM+attention   |                    0.867 |                     0.717 | 630154 |            9.31ms |
-| SVM (histograms)   |                    0.733 |                     0.567 |   8208 |            0.06ms |
-| MLP (aggregates)   |                    0.400 |                     0.190 |   1882 |            0.18ms |
-
-The test set is 12 tracks, one or two per raga, so a single misclassified track can move macro-F1 by 0.1 or more. Validation scores are optimistic for the LSTM and SVM: the LSTM was early-stopped on validation and the SVM's C/gamma were grid-searched on it. Test is the unbiased comparison.
-
-**LSTM test set detail:** accuracy 0.750, macro-F1 0.717, weighted-F1 0.736. Bēgaḍa and Rītigauḷa each have one test track; both were misclassified, so each scores 0 F1. Full per-raga breakdown, confusion matrix, and per-track predictions: [`models/confusion_matrix.csv`](models/confusion_matrix.csv), [`models/confusion_matrix.png`](models/confusion_matrix.png), [`models/test_predictions.csv`](models/test_predictions.csv).
-
-**Allied-raga error analysis.** All three test-set confusion pairs (Kamās→Kāṁbhōji, Bēgaḍa→Kāṁbhōji, Rītigauḷa→Bēgaḍa) involve ragas that are *not* melakartas — they're janya (derived) ragas with no swara-set definition yet in `ragams/melakartas.yaml` (which only covers the 72 melakarta parent scales), so the shared-swara-position claim can't be formally verified for them. `allied_raga_overlap` in `src/identifier/evaluate.py` only resolves pairs where both ragas are melakartas in the registry and reports "not verified" otherwise.
-
-**Latency** (10 runs, 10.4s clip, CREPE `tiny`):
+10 runs on a 10.4-second clip, CREPE `tiny`:
 
 | Stage | p50 | p95 |
 |---|---|---|
-| Audio load | 0.9ms | 469.6ms* |
-| CREPE | 871.5ms | 3124.1ms* |
-| Cents conversion | 0.06ms | 0.25ms |
-| Swara segmentation | 2.3ms | 6.4ms |
-| LSTM inference | 1.7ms | 17.6ms |
-| **Total** | **876.7ms** | **3617.2ms*** |
+| Audio load | 0.9 ms | 469.6 ms* |
+| CREPE | 871.5 ms | 3124.1 ms* |
+| Cents conversion | 0.06 ms | 0.25 ms |
+| Swara segmentation | 2.3 ms | 6.4 ms |
+| LSTM inference | 1.7 ms | 17.6 ms |
+| **Total** | **876.7 ms** | **3617.2 ms*** |
 
-*p95 is inflated by TensorFlow/CREPE cold-start on the first couple of runs; CREPE dominates end-to-end latency as expected, everything downstream of pitch extraction is sub-10ms.
-
-**Out-of-distribution evaluation** has not been run yet — it requires non-Saraga vocal recordings that haven't been supplied.
+\*p95 includes TensorFlow and CREPE cold-start on the first runs. CREPE dominates end-to-end latency, and every stage after pitch extraction takes under 10 ms.
 
 ## Setup
 
@@ -107,13 +102,19 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Run the tests:
+
+```bash
+python -m pytest
+```
+
 ## CLI quickstart
 
 ```bash
-# Ragam adherence check only
+# Raga adherence check only
 python scripts/check_adherence.py data/samples/demo_clip.wav Sankarabharanam 220
 
-# Raga identification only (requires a trained checkpoint; see Training below)
+# Raga identification only (requires a trained checkpoint; see below)
 python scripts/identify_raga.py data/samples/demo_clip.wav 220
 
 # Both, in one pass
@@ -123,59 +124,45 @@ python scripts/demo.py data/samples/demo_clip.wav 220 Sankarabharanam
 ## Training the identifier from scratch
 
 ```bash
-python scripts/download_saraga.py                 # ~14GB, resumable
-python scripts/prepare_identifier_data.py          # picks MVP-10, writes splits
-python scripts/train_identifier.py                 # trains, checkpoints models/identifier_best.pt
-python scripts/evaluate_identifier.py              # test metrics, confusion matrix
-python scripts/evaluate_baselines.py               # SVM/MLP baselines vs LSTM
+python scripts/download_saraga.py                 # about 14 GB, resumable
+python scripts/prepare_identifier_data.py         # picks the 10 ragas, writes splits
+python scripts/train_identifier.py                # saves models/identifier_best.pt
+python scripts/evaluate_identifier.py             # test metrics, confusion matrix
+python scripts/evaluate_baselines.py              # SVM and MLP baselines vs. LSTM
 python scripts/profile_latency.py
 ```
 
 ## Running the web demo
 
 ```bash
-# Terminal 1 -- backend
+# Terminal 1: backend
 source .venv/bin/activate
 uvicorn backend.main:app --port 8000
 
-# Terminal 2 -- frontend
+# Terminal 2: frontend
 cd frontend
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173, upload a clip, set the shruthi, optionally pick a target ragam, and submit. The frontend and the CLI (`scripts/demo.py`) call the same pipeline code (`src/pipeline.py`).
+Open `http://localhost:5173`, upload a clip, set the shruthi, optionally choose a target raga, and submit. The web demo and the CLI (`scripts/demo.py`) call the same pipeline code in `src/pipeline.py`.
 
-The frontend calls `http://localhost:8000` by default. To point it at another backend, set `VITE_API_BASE` when building or running it (Vite reads it at build time):
+The frontend calls `http://localhost:8000` by default. To point it at another backend, set `VITE_API_BASE` at build time:
 
 ```bash
 VITE_API_BASE=https://api.example.com npm run build
 ```
 
-The backend only accepts requests from `localhost:5173` (`allow_origins` in `backend/main.py`), so add the deployed frontend's origin there too.
-
-## Status
-
-- [x] Project scaffold
-- [x] Ragam definitions (all 72 melakartas)
-- [x] Swarasthana cents lookup
-- [x] Audio loader
-- [x] CREPE wrapper
-- [x] Tonic-relative cents conversion
-- [x] Swara segmenter
-- [x] Adherence checker
-- [x] Saraga dataset loader (windowed, track-level splits)
-- [x] LSTM raga identifier (training + evaluation)
-- [x] Baseline comparison (SVM, MLP, LSTM)
-- [x] Allied-raga confusion analysis (partial — limited by melakarta-only registry coverage)
-- [ ] Out-of-distribution evaluation (needs non-Saraga recordings)
-- [x] Latency profiling
-- [x] CLI demo
-- [x] Web demo (FastAPI + React)
+The backend accepts requests only from `localhost:5173` (`allow_origins` in `backend/main.py`), so add a deployed frontend's address there as well.
 
 ## Dataset
 
-[Saraga 1.5 Carnatic](https://zenodo.org/records/4301737) (CompMusic, MTG-UPF) — 249 tracks, of which 161 have a usable raga label + tonic + resolvable audio (65 lack a raga label entirely, 23 more have ambiguous multitrack audio, 6 are labeled "Rāgamālika" — a composition form spanning multiple ragas, not a single raga, and excluded for that reason). Pitch extraction runs on an isolated vocal stem when Saraga provides one, falling back to the full mix otherwise, since CREPE is a monophonic pitch tracker and a polyphonic mix (vocal + violin + mridangam + ghatam) produces materially noisier estimates.
+[Saraga 1.5 Carnatic](https://zenodo.org/records/4301737) (CompMusic, MTG-UPF): 249 tracks, of which 161 are usable. 65 lack a raga label, 23 have ambiguous multitrack audio, and 6 are labeled Rāgamālika, a form that moves through several ragas and so has no single label. The 10 ragas were chosen by total audio duration rather than track count: Bhairavi, Tōḍi, Ṣanmukhapriya, Kāṁbhōji, Mōhanaṁ, Kamās, Bēgaḍa, Rītigauḷa, Kalyāṇi, and Behāg. That gives 42 tracks (20 train, 10 validation, 12 test).
+
+## Not done yet
+
+- **Out-of-distribution evaluation.** Every result above comes from Saraga. Testing on recordings from outside the dataset is the next step, and it needs new non-Saraga recordings.
+- **Janya raga definitions.** Adding swara sets for derived ragas would let the error analysis verify allied-raga confusions.
 
 ## References
 
