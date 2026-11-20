@@ -1,5 +1,7 @@
 # Swara AI
 
+![Swara AI demo](docs/demo.gif)
+
 A Carnatic vocal analysis system that checks whether a singer stays within a raga and identifies the raga from a recording alone. Every recording is converted to pitch relative to the singer's tonic (shruthi) before any analysis, so results do not depend on which key the singer chose.
 
 ## Why this project
